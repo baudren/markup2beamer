@@ -3,9 +3,14 @@ from language import language_definition as lang
 from copy import deepcopy
 import re
 
-def md_to_tex(md_file, **kwargs):
+def md_to_tex(command_line, **kwargs):
+
+    # create references to some command_line variables for convenience.
+    md_file = command_line.input
+    verbose = command_line.verbose
 
     # Create a temporary tex file
+
     tex_file = md_file.replace('.md', '.tex')
     source = []
 
@@ -67,9 +72,9 @@ def md_to_tex(md_file, **kwargs):
 
     # Recover the header, and title.
     transformator['custom_headers'], index = catch(source, index,
-            'custom_headers')
+            'custom_headers', verbose)
     transformator['title'], index = catch(source, index,
-            'title')
+            'title', verbose)
 
     #for key, value in transformator.iteritems():
         #print key,':'
@@ -80,7 +85,7 @@ def md_to_tex(md_file, **kwargs):
 
     # Transcribe the header into a tex file
     tex = od()
-    tex['headers'] = texify(source, 'headers', transformator)
+    tex['headers'] = texify(source, 'headers', transformator, verbose)
     #for key in transformator.iterkeys():
         #tex[key] = texify(source, key, transformator[key])
 
@@ -91,11 +96,11 @@ def md_to_tex(md_file, **kwargs):
 
     return 'toto', False
 
-def tex_to_pdf(tex_file, pdf_file):
+def tex_to_pdf(tex_file, pdf_file, verbose):
 
     return False
 
-def texify(source, context, transformator):
+def texify(source, context, transformator, verbose):
 
     if context == 'headers':
         start_index = transformator['custom_headers'][0]
@@ -104,8 +109,9 @@ def texify(source, context, transformator):
     title = source[transformator['title'][0]+1]
 
     text = deepcopy(source[start_index:stop_index])
-    print 'Trying to texify the following',text
-    print 'in the context of', context
+    if verbose:
+        print 'Trying to texify the following',text
+        print 'in the context of', context
 
     tex = []
 
@@ -136,7 +142,7 @@ def texify(source, context, transformator):
     return tex
 
 # define helper function
-def catch(source, start_index, context):
+def catch(source, start_index, context, verbose):
     """
     Recover element surrounded by given start and stop strings
 

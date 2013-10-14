@@ -16,7 +16,7 @@ def md2beamer():
     command_line = parser_md2b.parse()
 
     # Text treatment from md to latex
-    tex_file, success = fp.md_to_tex(command_line.input)
+    tex_file, success = fp.md_to_tex(command_line)
 
     if not success:
         print('Tried, failed... Please check your .md')
