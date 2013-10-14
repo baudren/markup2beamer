@@ -18,6 +18,9 @@ def create_parser():
     parser.add_argument('-o', metavar='output pdf', type=str, dest='pdf',
         default=None)
 
+    parser.add_argument('-v', metavar='verbosity', dest='verbose',
+        action='store_const',const=True, default=False)
+
     return parser
 
 def parse():
