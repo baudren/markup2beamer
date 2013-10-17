@@ -10,78 +10,33 @@ def md_to_tex(command_line, **kwargs):
     verbose = command_line.verbose
 
     # Create a temporary tex file
-
     tex_file = md_file.replace('.md', '.tex')
     source = []
 
     # Create a dictionnary that will store as a string the lines it started
     # from in the md file, and the resulting process written on the tex.
     transformator = od()
-
+    
     # Recover entire file
     with open(md_file, 'r') as md:
         for index, line in enumerate(md):
             source.append(line.strip('\n'))
 
-    # Extract meaningful parts
-    for index, line in enumerate(source):
-        in_headers, in_body = True, False
-        in_custom_headers = True
-        # Extract header (everything between '~~~ header' and '~~~')
-        if in_headers:
-            if in_custom_headers:
-                if line.find('~~~ header') != -1:
-                    custom_headers = []
-                    custom_headers.append(index)
-                    continue
-                if line.find('~~~') != -1:
-                    in_custom_headers = False
-                    in_title = True
-                    # temp
-                    custom_headers.append(index)
-                    transformator['custom_headers'] = custom_headers
-            elif in_title:
-                # catching the tile
-                if in_title and line.find('=====') != -1:
-                    title = []
-                    title.append(index)
-                    title.append(index+2)
-                    transformator['title'] = title
+    # Recover sequentially the different parts.
+    current_line = 0
 
-                    in_title = False
-                    in_info = True
-            elif in_info:
-                # catching all args starting with % signs
-                if line.find('%') != -1:
-                    info = []
-                    info.append(index)
-                    info.append(index+2)
-                    transformator['info'] = info
+    # Recover the header, and title. The catch function is where the language
+    # is processed.
+    #for name in ['custom_headers', 'title', 'body']:
+    for name in ['custom_headers', 'title']:
+        transformator[name], current_line = catch(
+            source, current_line, name, verbose)
+    """
+    .. warning::
 
-                    in_info = False
-                    in_body = True
+            Note that the order: headers, title, body must be respected
 
-
-                    continue
-        if not in_headers:
-            break
-
-    transformator = od()
-
-    index = 0
-
-    # Recover the header, and title.
-    transformator['custom_headers'], index = catch(source, index,
-            'custom_headers', verbose)
-    transformator['title'], index = catch(source, index,
-            'title', verbose)
-
-    #for key, value in transformator.iteritems():
-        #print key,':'
-        #for elem in source[value[0]:value[1]]:
-            #print '\t',elem
-        #print
-    #exit()
+    """
 
     # Transcribe the header into a tex file
     tex = od()
@@ -92,6 +47,7 @@ def md_to_tex(command_line, **kwargs):
     with open(tex_file, 'w') as tex_writer:
         for key, value in tex.iteritems():
             for line in value:
+                print line.rstrip('\n')
                 tex_writer.write(line)
 
     return 'toto', False
@@ -120,21 +76,23 @@ def texify(source, context, transformator, verbose):
         for line in text:
             if len(line) != 0:
                 try:
-                    action, argument = line.split(':')
+                    action, arguments = line.split(':')
                     # Strip out spaces from both sides
-                    argument = argument.strip()
-                    if argument.find('[') != -1:
-                        # the argument contains extra information
-                        m = re.compile('\[.*\]')
-                        temp = m.match(argument)
-                        option = temp.group()[1:-1]
-                        main = argument[temp.end():].strip()
-                        if action == 'title':
-                            main = title
-                        tex.append('\%s[%s]{%s}\n' % (action, option, main))
-                    else:
-                        tex.append(
-                            '\%s{%s}\n' % (action, argument))
+                    arguments = arguments.strip()
+                    for argument in arguments.split(','):
+                        argument = argument.strip()
+                        if argument.find('[') != -1:
+                            # the argument contains extra information
+                            m = re.compile('\[.*\]')
+                            temp = m.match(argument)
+                            option = temp.group()[1:-1]
+                            main = argument[temp.end():].strip()
+                            if action == 'title':
+                                main = title
+                            tex.append('\%s[%s]{%s}\n' % (action, option, main))
+                        else:
+                            tex.append(
+                                '\%s{%s}\n' % (action, argument))
                 except:
                     pass
 
