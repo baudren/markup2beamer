@@ -1,5 +1,5 @@
 ~~~ headers
-input: ../style/default.tex
+usepackage:     colors, 
 
 title:          [presentation]
 author:         [BA] Benjamin Audren
