@@ -1,5 +1,6 @@
 ~~~ headers
-usepackage:     colors, 
+usepackage:     graphicx, wasysym, hyperref 
+usepackage:     color
 
 title:          [presentation]
 author:         [BA] Benjamin Audren
