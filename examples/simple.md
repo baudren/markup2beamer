@@ -1,14 +1,17 @@
-~~~ header
-\input{../style/default.tex}
-def d: {\rm d}
+~~~ headers
+usepackage:     colors, 
+
+title:          [presentation]
+author:         [BA] Benjamin Audren
+date:           \today
 ~~~
 
 =================================
-= A nice and quick presentation
+A nice and quick presentation
 =================================
-%title:  [presentation]
-%author: [BA] Benjamin Audren
-%data:   \today
+
+# Title #
+# Outline #
 
 # Section
 
@@ -18,25 +21,25 @@ Slide title
 -----------
 Slide subtitle
 
-body of text, with
+    body of text, with
 
-~~~ block, 80%
-- some text
-- more text
-~~~
+    ~~~ block, 80%
+    - some text
+    - more text
+    ~~~
 
-~~~ exampleblock, 80%
-A nice intro about life **etc**
-~~~
+    ~~~ exampleblock, 80%
+    A nice intro about life **etc**
+    ~~~
 
 Another slide
 -------------
 
-This time with no subtitle, but with an image
+    This time with no subtitle, but with an image
 
-~~~ image, center 0.2
-../images/python.png
-~~~
+    ~~~ image, center 0.2
+    ../images/python.png
+    ~~~
 
 ## Another subsection
 
@@ -45,8 +48,8 @@ This time with no subtitle, but with an image
 A lonely slide in a lonely world
 --------------------------------
 
-~~~ column 50%
-+ but at least
-+ it has a reveal
-+ list in it !
-~~~
+    ~~~ column, 50%
+    + but at least
+    + it has a reveal
+    + list in it !
+    ~~~

@@ -1,0 +1,4 @@
+*~
+*.swp
+examples/*.tex
+*.pyc
