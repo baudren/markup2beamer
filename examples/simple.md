@@ -4,6 +4,7 @@ usepackage:     color
 
 title:          [presentation]
 author:         [BA] Benjamin Audren
+institute:      [EPFL] \'Ecole Polytechnique F\'ed\'erale de Lausanne
 date:           \today
 ~~~
 
