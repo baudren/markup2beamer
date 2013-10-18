@@ -13,6 +13,9 @@ def md_to_tex(command_line, **kwargs):
     tex_file = md_file.replace('.md', '.tex')
     source = []
 
+    # Define the sequence of different parts in the text file
+    parts = ['headers', 'title', 'body']
+
     # Create a dictionnary that will store as a string the lines it started
     # from in the md file, and the resulting process written on the tex.
     transformator = od()
@@ -20,15 +23,14 @@ def md_to_tex(command_line, **kwargs):
     # Recover entire file
     with open(md_file, 'r') as md:
         for index, line in enumerate(md):
-            source.append(line.strip('\n'))
+            source.append(line.strip('\n').strip())
 
     # Recover sequentially the different parts.
     current_line = 0
 
     # Recover the header, and title. The catch function is where the language
     # is processed.
-    #for name in ['custom_headers', 'title', 'body']:
-    for name in ['custom_headers', 'title']:
+    for name in parts:
         transformator[name], current_line = catch(
             source, current_line, name, verbose)
     """
@@ -40,9 +42,9 @@ def md_to_tex(command_line, **kwargs):
 
     # Transcribe the header into a tex file
     tex = od()
-    tex['headers'] = texify(source, 'headers', transformator, verbose)
-    #for key in transformator.iterkeys():
-        #tex[key] = texify(source, key, transformator[key])
+
+    for name in ['headers', 'body']:
+        tex[name] = texify(source, name, transformator, verbose)
 
     with open(tex_file, 'w') as tex_writer:
         for key, value in tex.iteritems():
@@ -58,9 +60,8 @@ def tex_to_pdf(tex_file, pdf_file, verbose):
 
 def texify(source, context, transformator, verbose):
 
-    if context == 'headers':
-        start_index = transformator['custom_headers'][0]
-        stop_index = transformator['custom_headers'][1]
+    start_index = transformator[context][0]
+    stop_index = transformator[context][1]
 
     title = source[transformator['title'][0]+1]
 
@@ -77,6 +78,10 @@ def texify(source, context, transformator, verbose):
             if len(line) != 0:
                 try:
                     action, arguments = line.split(':')
+                    # on the first line, either an input or document class
+                    if len(tex) == 0:
+                        if action != 'input':
+                            tex.append('\documentclass[xcolor=dvipsnames]{beamer}\n')
                     # Strip out spaces from both sides
                     arguments = arguments.strip()
                     for argument in arguments.split(','):
@@ -96,7 +101,21 @@ def texify(source, context, transformator, verbose):
                 except:
                     pass
 
-        # check if a document class was included, if not, add one
+
+    elif context == 'body':
+        tex.append('\n\\begin{document}\n')
+        special = re.compile('%s\s+(.*)\s+%s' % (
+            lang['md']['special-frames'][0], lang['md']['special-frames'][1]))
+        for line in text:
+            # catch special frames, 
+            temp = special.match(line)
+            if temp is not None:
+                action = temp.group(1).lower()
+                special_action(tex, action)
+                
+        tex.append('\n\end{document}\n')
+
+
     return tex
 
 # define helper function
@@ -116,9 +135,13 @@ def catch(source, start_index, context, verbose):
     """
 
     # Recover start and stop strings definition from the language file
-    start_string, stop_string = lang[context]
+    start_string, stop_string = lang['md'][context]
 
-    # If stop_string if not None, do a catch between
+    # If the end is nothing, goble the rest of the file
+    if stop_string == '':
+        return [start_index, len(source)+1], len(source)+1
+
+    # else, do a catch between the start and stop
     # Recover the exact first line
     first_temp = [elem for elem in source[start_index:] if
             elem.find(start_string) != -1]
@@ -138,3 +161,16 @@ def catch(source, start_index, context, verbose):
         return [first_index, None], first_index+1
 
     return [first_index, second_index+1], second_index+1
+
+def special_action(tex, action):
+    
+
+    tex.append('\\begin{frame}\n')
+    if action == 'title':
+        tex.append('\\titlepage\n')
+    elif action == 'outline':
+        tex.append('\\frametitle{Outline}\n')
+        tex.append('\\tableofcontents\n')
+    else:
+        print 'warning, %s not understood', action
+    tex.append('\end{frame}\n')

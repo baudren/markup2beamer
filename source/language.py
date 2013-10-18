@@ -1,4 +1,11 @@
 language_definition = {
-    'custom_headers' : ('~~~ headers', '~~~'),
-    'title' : ('====', '===='),
+    'md':{
+        'headers' : ('~~~ headers', '~~~'),
+        'title' : ('====', '===='),
+        'body' : ('', ''),
+        'special-frames' : ('#', '#'),
+        'section' : ('#', 'before'),
+        'frame-title' : ('----', 'below'),
+        'frame-subtitle' : ('----', 'above'),
+        }
     }
