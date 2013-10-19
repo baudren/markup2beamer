@@ -1,6 +1,8 @@
 ~~~ headers
 usepackage:     graphicx, wasysym, hyperref 
 usepackage:     color
+usetheme:       CambridgeUS
+usecolortheme:  orchid
 
 title:          [presentation]
 author:         [BA] Benjamin Audren
