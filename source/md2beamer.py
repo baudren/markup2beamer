@@ -19,7 +19,7 @@ def md2beamer():
     tex_file, success = fp.md_to_tex(command_line)
 
     if not success:
-        print('Tried, failed... Please check your .md')
+        print('Tried to texify your markup and failed... Please check your source')
         return success
 
     # Apply pdflatex enough times and check for issues (open a window with the
@@ -27,10 +27,10 @@ def md2beamer():
     success = fp.tex_to_pdf(tex_file, command_line.pdf)
 
     if not success:
-        print('Tried, failed... Please check your .md')
+        print('Tried to pdfify your tex and failed... Please check your source')
 
     return success
 
     
-if __name__ == '__main__':
+if (__name__ == '__main__'):
     md2beamer()

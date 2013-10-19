@@ -1,4 +1,11 @@
 *~
 *.swp
-examples/*.tex
+*.tex
+*.aux
+*.toc
+*.log
+*.out
+*.pdf
+*.nav
+*.snm
 *.pyc
