@@ -106,13 +106,48 @@ def texify(source, context, transformator, verbose):
         tex.append('\n\\begin{document}\n')
         special = re.compile('%s\s+(.*)\s+%s' % (
             lang['md']['special-frames'][0], lang['md']['special-frames'][1]))
-        for line in text:
-            # catch special frames, 
-            temp = special.match(line)
-            if temp is not None:
-                action = temp.group(1).lower()
+        # have different possibilities, so far this one is not very robust,
+        # because need another test.
+        if lang['md']['section'][1] == 'before':
+            sections = re.compile('(%s+)\s(.*)' % (lang['md']['section'][0]))
+                #lang['md']['section'][0]))
+
+        # initialize position tracking
+        slides = []
+        in_slide = False
+        for index, line in enumerate(text):
+            # catch special frames, that are only one liners
+            special_frame = special.match(line)
+            section = sections.match(line)
+            print line, section , special_frame
+            if special_frame is not None:
+                action = special_frame.group(1).lower()
                 special_action(tex, action)
+                continue
+            elif section is not None:
+                if section.group(2).find(lang['md']['section'][0]) == -1:
+                    level = '%ssection' % ''.join(['sub' for i in
+                        range(len(section.group(1))-1)])
+                    tex.append('\n\%s{%s}\n\n' % (level, section.group(2)))
+            elif line.find(lang['md']['frame-title'][0]) != -1:
+                # This will be triggered at the first slide, and after sections
+                if not in_slide:
+                    in_slide = True
+                    first_index = index-1
+                    continue
+                # triggered when reaching the end of a slide
+                else:
+                    last_index = index-2
+                    slides.append([first_index, last_index])
+                    first_index = index-1
                 
+            # when reaching the end, wrap up
+            if index == len(text)-1:
+                slides.append([first_index, index])
+        print slides
+        for indices in slides:
+            print text[indices[0]:indices[1]]
+
         tex.append('\n\end{document}\n')
 
 
