@@ -113,22 +113,30 @@ def texify(source, context, transformator, verbose):
                 #lang['md']['section'][0]))
 
         # initialize position tracking
-        slides = []
         in_slide = False
+
         for index, line in enumerate(text):
-            # catch special frames, that are only one liners
             special_frame = special.match(line)
             section = sections.match(line)
-            print line, section , special_frame
+
+            # catch special frames, that are only one liners
             if special_frame is not None:
                 action = special_frame.group(1).lower()
                 special_action(tex, action)
                 continue
+
+            # catch (sub)sections
             elif section is not None:
                 if section.group(2).find(lang['md']['section'][0]) == -1:
                     level = '%ssection' % ''.join(['sub' for i in
                         range(len(section.group(1))-1)])
+                    if in_slide:
+                        texify_slide(tex, text[first_index:index]) 
+                        #slides.append([first_index, index-1])
+                        in_slide = False
                     tex.append('\n\%s{%s}\n\n' % (level, section.group(2)))
+
+            # Catch title frame
             elif line.find(lang['md']['frame-title'][0]) != -1:
                 # This will be triggered at the first slide, and after sections
                 if not in_slide:
@@ -138,15 +146,12 @@ def texify(source, context, transformator, verbose):
                 # triggered when reaching the end of a slide
                 else:
                     last_index = index-2
-                    slides.append([first_index, last_index])
+                    texify_slide(tex, text[first_index:last_index+1])
                     first_index = index-1
                 
             # when reaching the end, wrap up
             if index == len(text)-1:
-                slides.append([first_index, index])
-        print slides
-        for indices in slides:
-            print text[indices[0]:indices[1]]
+                texify_slide(tex, text[first_index:index+1])
 
         tex.append('\n\end{document}\n')
 
@@ -209,3 +214,15 @@ def special_action(tex, action):
     else:
         print 'warning, %s not understood', action
     tex.append('\end{frame}\n')
+
+def texify_slide(tex, source):
+    print 'deciphering slide'
+    title = source[0]
+    if source[2] != '':
+        subtitle = source[2]
+    else:
+        subtitle = ''
+    tex.append('\n\\begin{frame}{%s}{%s}\n' % (title, subtitle))
+    for index, line in enumerate(source):
+        pass 
+    tex.append('\n\end{frame}\n')
