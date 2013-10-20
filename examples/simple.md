@@ -59,4 +59,8 @@ A lonely slide in a lonely world
     +- enumerate in it !
     ~~~
 
+    ~~~ alertblock | This one is red; 60%
+    just to show all the possible blocks !
+    ~~~
+
     It more importantly contains some \verb?verbatim?
