@@ -40,10 +40,10 @@ Slide subtitle
 Another slide
 -------------
 
-    This time with no subtitle, but with an image
+    This time with no subtitle, but with a centered image!
 
-    ~~~ image | A nice programming language; center, 0.2
-    ../images/python.png
+    ~~~ image | A nice programming language; center, scale=0.4
+    python-logo.png
     ~~~
 
 ## Another subsection
