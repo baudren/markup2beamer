@@ -98,8 +98,15 @@ def texify(source, context, transformator, verbose):
                         else:
                             tex.append(
                                 '\%s{%s}\n' % (action, argument))
+                # if there was no :, it means it is a special command
                 except:
-                    pass
+                    if line.find('outline-at-sections') != -1:
+                        tex.append('\AtBeginSection[]\n{\\begin{frame}<beamer>\n')
+                        tex.append('\\frametitle{Outline}\n\\tableofcontents[\n')
+                        tex.append('currentsection,sectionstyle=show/shaded,')
+                        tex.append('subsectionstyle=show/show/hide]\n\end{frame}}\n')
+                    else:
+                        pass
 
 
     elif context == 'body':
@@ -208,15 +215,19 @@ def special_action(tex, action):
     tex.append('\\begin{frame}\n')
     if action == 'title':
         tex.append('\\titlepage\n')
-    elif action == 'outline':
+    elif action.find('outline') != -1:
+        # check if option is specified with pipe
         tex.append('\\frametitle{Outline}\n')
-        tex.append('\\tableofcontents\n')
+        if len(action.split('|')) == 1:
+            tex.append('\\tableofcontents\n')
+        else:
+            action, complement = action.split('|')
+            tex.append('\\tableofcontents[%s]\n' % complement)
     else:
         print 'warning, %s not understood', action
     tex.append('\end{frame}\n')
 
 def texify_slide(tex, source):
-    print 'deciphering slide'
     title = source[0]
     if source[2] != '':
         subtitle = source[2]
@@ -242,10 +253,7 @@ def texify_slide(tex, source):
     # loop on the slide, have a nested way of deciphering environments.
     index = 3
     while True:
-        print 'First search starting at %i' % index
         success, index = extract_environments(source, tex, index)
-        print 'Search ended at %i: %s' % (index-1, source[index-1])
-        print 'Starting at %i' % index
         if not success:
             break
 
@@ -260,7 +268,6 @@ def extract_environments(source, tex, start_index):
     in_list = False
 
     for index, line in enumerate(source[start_index:]):
-        print 'reading %i th line: %s' % (index, line)
         begin_env = env.match(line)
         begin_list = list_env.match(line)
         # enter one environment,
@@ -278,13 +285,11 @@ def extract_environments(source, tex, start_index):
                 else:
                     print '--> options'
                     name, options = begin_env.group(1).split(';')[0], begin_env.group(1).split(';')[1].split(',')
-                if name.find('block') != -1:
+                if name.find('|') != -1:
                     # One can specify the title of the block with a |
-                    print 'found a block'
-                    print name.split('|')
-                    if len(name.split('|')) > 1:
-                        name, title = name.split('|')
-                headers = get_surrounding_environment(name, options, title)
+                    name, title = name.split('|')
+                headers = get_surrounding_environment(name.strip(), options,
+                        title.strip())
                 tex.append(headers[0])
             # if in one, recursive call to this function
             else:
@@ -326,7 +331,7 @@ def extract_environments(source, tex, start_index):
                     tex.append('\end{%s}\n' % list_type)
             else:
                 print 'normal line being written', line
-                tex.append(line)
+                tex.append(line+' '+'\n')
         # getting out
     print 'Am I getting here ?'
 
@@ -355,7 +360,24 @@ def get_surrounding_environment(name, options, title):
         if has_extra_column_env:
             stop_line += '\end{columns}\n'
     elif name.find('image') != -1:
-        stop_line = ''
+        option_string = ''
+        has_align = False
+        for option in options:
+            option = option.strip().lower()
+            if option in ['center', 'left', 'right']:
+                has_align = True
+                align = option
+            else:
+                option_string += option+','
+        if has_align:
+            start_line += '\\begin{%s}' % align
+        start_line += '\includegraphics[%s]{' % (option_string)
+        if has_align:
+            stop_line = '}\n\end{%s}\n' % align
+            #stop_line += '}\caption{%s}\n\end{%s}\n' % (title, align)
+        else:
+            stop_line = '}\n'
+            #stop_line = '}\caption{%s}\n' % title
     else:
         if name.find('columns') != -1:
             try:
