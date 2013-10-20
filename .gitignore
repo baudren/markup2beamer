@@ -9,3 +9,5 @@
 *.nav
 *.snm
 *.pyc
+*.fdb_latexmk
+*.vrb

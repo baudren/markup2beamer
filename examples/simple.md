@@ -1,6 +1,8 @@
 ~~~ headers
 usepackage:     graphicx, wasysym, hyperref 
 usepackage:     color
+usetheme:       CambridgeUS
+usecolortheme:  orchid
 
 title:          [presentation]
 author:         [BA] Benjamin Audren
@@ -25,13 +27,14 @@ Slide subtitle
 
     body of text, with
 
-    ~~~ block, 80%
-    - some text
-    - more text
+    ~~~ block | A catchy block title; 80%
+    some text, and some more text
     ~~~
 
-    ~~~ exampleblock, 80%
-    A nice intro about life **etc**
+    ~~~ exampleblock
+    A nice intro about life **etc**, without title. It will contain
+    * a list
+    * of nice items
     ~~~
 
 Another slide
@@ -39,7 +42,7 @@ Another slide
 
     This time with no subtitle, but with an image
 
-    ~~~ image, center 0.2
+    ~~~ image | A nice programming language; center, 0.2
     ../images/python.png
     ~~~
 
@@ -50,8 +53,10 @@ Another slide
 A lonely slide in a lonely world
 --------------------------------
 
-    ~~~ column, 50%
-    + but at least
-    + it has a reveal
-    + list in it !
+    ~~~ columns; 50%
+    +- but at least
+    +- it has a reveal
+    +- enumerate in it !
     ~~~
+
+    It more importantly contains some \verb?verbatim?
