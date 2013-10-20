@@ -11,3 +11,4 @@
 *.pyc
 *.fdb_latexmk
 *.vrb
+*.synctex.gz
