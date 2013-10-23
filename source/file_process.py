@@ -23,7 +23,7 @@ def md_to_tex(command_line, **kwargs):
     # Recover entire file
     with open(md_file, 'r') as md:
         for index, line in enumerate(md):
-            source.append(line.strip('\n').strip())
+            source.append(line.strip('\n').rstrip())
 
     # Recover sequentially the different parts.
     current_line = 0
@@ -301,6 +301,7 @@ def extract_environments(source, tex, start_index):
                         return success, index_nested
         # Entering a list environment.
         elif begin_list is not None:
+            print line, 'detected a list'
             if not in_list:
                 in_list = True
                 # Recover the type of the list
@@ -321,19 +322,21 @@ def extract_environments(source, tex, start_index):
                 if in_list:
                     tex.append('\end{%s}\n' % list_type)
                     print '/!\ exiting list'
+                    in_list = False
                 if in_environment:
                     print '/!\ exiting environment'
                     tex.append(headers[1])
                     return True, start_index + index
-            elif line in ['\n', '']:
+            elif line.strip() == '':
                 if in_list:
                     print 'I discovered an empty line, getting out of itemize'
                     tex.append('\end{%s}\n' % list_type)
+                    in_list = False
+                    #return True, start_index + index + 1
             else:
                 print 'normal line being written', line
                 tex.append(line+' '+'\n')
         # getting out
-    print 'Am I getting here ?'
 
     return False, index
 
@@ -378,6 +381,9 @@ def get_surrounding_environment(name, options, title):
         else:
             stop_line = '}\n'
             #stop_line = '}\caption{%s}\n' % title
+    elif name.find('verbatim') != -1:
+        start_line += '\\begin{%s}\n' % name
+        stop_line = '\end{%s}\n' % name
     else:
         if name.find('columns') != -1:
             try:

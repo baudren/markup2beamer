@@ -6,4 +6,4 @@ o support images
   and outline slide
 - nested environments are failing right now
 - allow for <2> type options for blocks, anything.
-- for verbatim, remove the strip command, and the empty options
+o for verbatim, remove the strip command, and the empty options
