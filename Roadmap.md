@@ -7,4 +7,5 @@ o support images
 - nested environments are failing right now
 o allow for <2> type options for blocks, anything.
 o for verbatim, remove the strip command, and the empty options
-- good handling of column environments
+~ good handling of column environments
+o better option handling
