@@ -261,7 +261,7 @@ def texify_slide(tex, source):
 
 def extract_environments(source, tex, start_index):
 
-    env = re.compile('%s\s+(.*)' % lang['md']['environments'][0])
+    env = re.compile('\s*%s\s+(.*)' % lang['md']['environments'][0])
     list_env = re.compile('\s*([*+])([-]*)\s+(.*)')
 
     in_environment = False
@@ -349,16 +349,20 @@ def get_surrounding_environment(name, options, title):
         # if an option with a percentage was passed, include a begin columns
         # before
         option_string = ''
+        slide_show = ''
         has_extra_column_env = False
         for option in options:
             if option.find('%') != -1:
                 has_extra_column_env = True
                 number = float(option.split('%')[0])/100
                 start_line += '\\begin{columns}\n\column{%g\\textwidth}\n' % number
+            # take care of slide appearance
+            elif option.find('<') != -1:
+                slide_show = option.strip()
             else:
                 option_string += option+','
 
-        start_line += '\\begin{%s}{%s}\n' % (name.strip(), title)
+        start_line += '\\begin{%s}{%s}%s\n' % (name.strip(), title, slide_show)
         stop_line = '\end{%s}\n' % name.strip()
         if has_extra_column_env:
             stop_line += '\end{columns}\n'
@@ -394,7 +398,14 @@ def get_surrounding_environment(name, options, title):
             start_line += '\\begin{columns}\n\column{%g\\textwidth}\n' % number
             stop_line = '\end{columns}\n'
         else:
-            start_line = '\\begin{%s}[%s]\n' % (name.strip(), ','.join(options))
+            slide_show = ''
+            option_string = ''
+            for option in options:
+                if option.find('<') != -1:
+                    slide_show = option.strip()
+                else:
+                    option_string += option+','
+            start_line = '\\begin{%s}[%s]%s\n' % (name.strip(), option_string, slide_show)
             stop_line = '\end{%s}\n' % name.strip()
     return [start_line, stop_line]
 
