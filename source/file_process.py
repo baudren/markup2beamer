@@ -238,7 +238,8 @@ def texify_slide(tex, source):
     # check for a \verb environnement, and if present, add fragile
     fragile = False
     for line in source:
-        if line.find('\\verb') != -1:
+        if (line.find('verb') != -1 or line.find('_') != -1):
+            # There might be some false positive, but who cares ?
             fragile = True
             break
 
@@ -335,6 +336,8 @@ def extract_environments(source, tex, start_index):
                     tex.append('\end{%s}\n' % list_type)
                     in_list = False
                     #return True, start_index + index + 1
+                else:
+                    tex.append('\n')
             else:
                 print 'normal line being written', line
                 tex.append(line+' '+'\n')
