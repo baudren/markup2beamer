@@ -229,6 +229,8 @@ def special_action(tex, action):
 
 def texify_slide(tex, source):
     title = source[0]
+    if title == 'None':
+        title = ''
     if source[2] != '':
         subtitle = source[2]
     else:
