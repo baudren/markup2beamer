@@ -4,3 +4,6 @@ o if an input command is in the headers, do not include a
 o support images
 - allow for slides with no Title (None), and coming before the title
   and outline slide
+- nested environments are failing right now
+- allow for <2> type options for blocks, anything.
+- for verbatim, remove the strip command, and the empty options
