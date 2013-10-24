@@ -9,3 +9,6 @@ o allow for <2> type options for blocks, anything.
 o for verbatim, remove the strip command, and the empty options
 ~ good handling of column environments
 o better option handling
+- have a short environment type (for commands like vspace, hspace)
+- recognise *toto*, **toto**, for it and bf,  and `toto`, ``toto``,
+  ```toto``` for user defined emphasis (like \color{BrickRed}\bf, etc)
