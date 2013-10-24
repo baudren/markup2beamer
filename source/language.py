@@ -8,6 +8,5 @@ language_definition = {
         'frame-title' : ('----', 'below'),
         'frame-subtitle' : ('----', 'above'),
         'environments' : ('~~~', '~~~'),
-        'short-environments' : ('~~', '~~'),
         }
     }

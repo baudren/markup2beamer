@@ -57,7 +57,8 @@ Softwares
     * {\only<2>{\Red\bf} Git}
     ~~~
 
-    \vspace{0.5cm}
+    ~~~ vspace; 0.5cm ~~~
+
     \only<2>{ {\it Linus Torvalds}: ``Subversion used to say CVS done
     right: with that slogan there is nowhere you can go. There is no way
     to do cvs right.''}

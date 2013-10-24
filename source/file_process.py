@@ -279,6 +279,8 @@ def texify_slide(tex, source, verbose):
 def extract_environments(source, tex, start_index, verbose):
 
     env = re.compile('\s*%s\s+(.*)' % lang['md']['environments'][0])
+    short_env = re.compile('\s*%s\s+(.*)\s+%s\s*' %
+        (lang['md']['environments'][0], lang['md']['environments'][1]))
     list_env = re.compile('\s*([*+])([-]*)\s+(.*)')
 
     in_environment = False
@@ -286,12 +288,24 @@ def extract_environments(source, tex, start_index, verbose):
 
     for index, line in enumerate(source[start_index:]):
         begin_env = env.match(line)
+        has_short_env = short_env.match(line)
         begin_list = list_env.match(line)
         # enter one environment,
         # Please note that an environment can not appear inside a list...
         if begin_env is not None:
+            # First, test if it is a short environment
+            if has_short_env is not None:
+                if verbose:
+                    print 'caught a short env'
+                command = has_short_env.group(1)
+                if len(command.split(';')) == 1:
+                    name, argument = command, ''
+                else:
+                    name, argument = command.split(';')
+                tex.append('\%s{%s}\n' % (name, argument))
+
             # if not in one: get name
-            if not in_environment:
+            elif not in_environment:
                 if verbose:
                     print ' /!\ entering env'
                 in_environment = True
@@ -318,6 +332,7 @@ def extract_environments(source, tex, start_index, verbose):
                     success, index_nested = extract_environments(source, tex,
                             index_nested)
                     if not success:
+                        #break
                         return success, index_nested
         # Entering a list environment.
         elif begin_list is not None:
