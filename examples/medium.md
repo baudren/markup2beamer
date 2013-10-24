@@ -9,6 +9,7 @@ institute:      [EPFL] \'Ecole Polytechnique F\'ed\'erale de Lausanne
 date:           17/10/2013
 
 outline-at-sections
+no-navigation-symbols
 ~~~
 
 
@@ -17,7 +18,6 @@ Git version control - Github
 ===============================
 
 # Title #
-# Outline | subsectionstyle=hide #
 
 None
 --------------
@@ -25,6 +25,9 @@ None
 ``This must be Thursday. I never could get the hang of Thursdays''
 {\Grey\it (Arthur Dent, a few minutes before the Earth gets
 destroyed)}
+
+
+# Outline | subsectionstyle=hide #
 
 
 # Version Control with Git
