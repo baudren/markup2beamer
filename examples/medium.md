@@ -63,3 +63,37 @@ Softwares
     right: with that slogan there is nowhere you can go. There is no way
     to do cvs right.''}
   
+
+An example of rst source files
+-------------------------------
+Or "How sphinx is magical"
+
+    \scriptsize 
+
+    ~~~ columns
+
+    ~~~ column; 45% ~~~
+        mcmc.rst: 
+        ~~~ verbatim
+        Mcmc module 
+        =========== 
+
+        .. automodule:: mcmc 
+            :members: 
+            :undoc-members: 
+            :show-inheritance: 
+        ~~~
+
+    ~~~ column; 45% ~~~
+        analyze.rst: 
+        ~~~ verbatim
+        Likelihood class module 
+        ======================= 
+
+        .. automodule:: likelihood_class 
+            :members: 
+            :undoc-members: 
+            :show-inheritance: 
+        ~~~
+
+    ~~~

@@ -225,7 +225,6 @@ def catch(source, start_index, context, verbose):
 
 def special_action(tex, action, verbose):
     
-
     tex.append('\\begin{frame}\n')
     if action == 'title':
         tex.append('\\titlepage\n')
@@ -285,8 +284,16 @@ def extract_environments(source, tex, start_index, verbose):
 
     in_environment = False
     in_list = False
+    found_sub_environment = False
 
     for index, line in enumerate(source[start_index:]):
+        # if a nested environment was found, pass until index is index_nested
+        if found_sub_environment:
+            if index < index_nested-1:
+                continue
+            else:
+                found_sub_environment = False
+
         begin_env = env.match(line)
         has_short_env = short_env.match(line)
         begin_list = list_env.match(line)
@@ -297,43 +304,38 @@ def extract_environments(source, tex, start_index, verbose):
             if has_short_env is not None:
                 if verbose:
                     print 'caught a short env'
-                command = has_short_env.group(1)
-                if len(command.split(';')) == 1:
-                    name, argument = command, ''
-                else:
-                    name, argument = command.split(';')
-                tex.append('\%s{%s}\n' % (name, argument))
+                name, title, options = read_command(has_short_env.group(1))
+                for option in options:
+                    if option.find('%') != -1:
+                        number = float(option.split('%')[0])/100
+                        option_string = '%g\\textwidth' % number
+                    else:
+                        option_string = option
+                tex.append('\%s{%s}\n' % (name, option_string))
 
             # if not in one: get name
             elif not in_environment:
                 if verbose:
                     print ' /!\ entering env'
                 in_environment = True
-                options = []
-                title = ''
-                if len(begin_env.group(1).split(';')) == 1:
-                    if verbose:
-                        print '--> no options'
-                    name = begin_env.group(1)
-                else:
-                    if verbose:
-                        print '--> options'
-                    name, options = begin_env.group(1).split(';')[0], begin_env.group(1).split(';')[1].split(',')
-                if name.find('|') != -1:
-                    # One can specify the title of the block with a |
-                    name, title = name.split('|')
-                headers = get_surrounding_environment(name.strip(), options,
-                        title.strip(), verbose)
+                name, title, options = read_command(begin_env.group(1))
+                headers = get_surrounding_environment(name, options,
+                        title, verbose)
                 tex.append(headers[0])
+                # in the case of verbatim environment, spacing matter: recover
+                # the index of the first character of the line
+                if name in ['verbatim']:
+                    index_to_strip = line.index('~')
+
             # if in one, recursive call to this function
             else:
                 index_nested = start_index+index
-                while True:
-                    success, index_nested = extract_environments(source, tex,
-                            index_nested)
-                    if not success:
-                        #break
-                        return success, index_nested
+                if verbose:
+                    print 'found nested env'
+                success, index_nested = extract_environments(source, tex,
+                    index_nested, verbose)
+                found_sub_environment = True
+                continue
         # Entering a list environment.
         elif begin_list is not None:
             if verbose:
@@ -371,13 +373,17 @@ def extract_environments(source, tex, start_index, verbose):
                         print 'I discovered an empty line, getting out of itemize'
                     tex.append('\end{%s}\n' % list_type)
                     in_list = False
-                    #return True, start_index + index + 1
                 else:
                     tex.append('\n')
             else:
                 if verbose:
                     print 'normal line being written', line
-                tex.append(line+' '+'\n')
+                if in_environment:
+                    if name in ['verbatim']:
+                        tex.append(line[index_to_strip:]+'\n')
+                        continue
+
+                tex.append(line+'\n')
         # getting out
 
     return False, index
@@ -405,10 +411,10 @@ def get_surrounding_environment(name, options, title, verbose):
         if flags['has_align']:
             stop_line = '}\caption{%s}\n\end{%s}\n' % (title, out['align'])
         else:
-            stop_line = '}\caption{%s}\n' % title
+            stop_line = '}\caption{%s}\n\end{figure}\n' % title
     elif name.find('verbatim') != -1:
         start_line += '\\begin{%s}\n' % name
-        stop_line = '\end{%s}\n\end{figure}\n' % name
+        stop_line = '\end{%s}\n' % name
     else:
         if name.find('columns') != -1:
             if out['number'] == 0:
@@ -448,3 +454,16 @@ def parse_options(options, verbose):
             out['option_string'] += option+','
 
     return out, flags
+
+def read_command(argument):
+
+    options = []
+    title = ''
+    if len(argument.split(';')) == 1:
+        name = argument
+    else:
+        name, options = argument.split(';')[0], argument.split(';')[1].split(',')
+    if name.find('|') != -1:
+        # One can specify the title of the block with a |
+        name, title = name.split('|')
+    return name.strip(), title.strip(), options
