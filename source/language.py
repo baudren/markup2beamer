@@ -7,6 +7,6 @@ language_definition = {
         'section' : ('#', 'before'),
         'frame-title' : ('----', 'below'),
         'frame-subtitle' : ('----', 'above'),
-        'environments' : ('~~~', '~~~')
+        'environments' : ('~~~', '~~~'),
         }
     }

@@ -40,10 +40,10 @@ Slide subtitle
 Another slide
 -------------
 
-    This time with no subtitle, but with an image
+    This time with no subtitle, but with a centered image!
 
-    ~~~ image | A nice programming language; center, 0.2
-    ../images/python.png
+    ~~~ image | A nice programming language; center, scale=0.4
+    python-logo.png
     ~~~
 
 ## Another subsection
@@ -57,6 +57,10 @@ A lonely slide in a lonely world
     +- but at least
     +- it has a reveal
     +- enumerate in it !
+    ~~~
+
+    ~~~ alertblock | This one is red; 60%
+    just to show all the possible blocks !
     ~~~
 
     It more importantly contains some \verb?verbatim?

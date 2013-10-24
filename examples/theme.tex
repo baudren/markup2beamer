@@ -1,0 +1,157 @@
+\documentclass[xcolor=dvipsnames]{beamer}
+\mode<presentation>
+\usepackage{graphicx}
+\usepackage{wasysym}
+\usepackage{hyperref}
+\definecolor{links}{HTML}{2A1B81}
+\hypersetup{colorlinks,linkcolor=,urlcolor=links}
+\usepackage{fancyhdr}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{ulem}
+\def\Put(#1,#2)#3{\leavevmode\makebox(0,0){\put(#1,#2){#3}}}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes}
+\usetikzlibrary{positioning,decorations.pathreplacing}
+\usetikzlibrary{fit,shapes.misc}
+\usetikzlibrary{decorations.pathreplacing,calc}
+\newcommand{\tikzmark}[1]{\tikz[overlay,remember picture] \node (#1) {};}
+\usepackage{geometry}
+
+\usepackage{listliketab} %make itemize env behaving like tables !
+\usepackage{listings}
+\usepackage{setspace}
+\usepackage{color}
+
+% General Colors
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+% Colors for Python
+\definecolor{Code}{rgb}{0,0,0}
+\definecolor{Decorators}{rgb}{0.5,0.5,0.5}
+\definecolor{Numbers}{rgb}{0.5,0,0}
+\definecolor{MatchingBrackets}{rgb}{0.25,0.5,0.5}
+\definecolor{Keywords}{rgb}{0,0,0.5}
+\definecolor{Strings}{rgb}{0,0.63,0}
+\definecolor{Comments}{rgb}{0.4,0.4,0.4}
+\definecolor{Backquotes}{rgb}{0,0,0}
+\definecolor{Classname}{rgb}{0,0,0}
+\definecolor{FunctionName}{rgb}{0,0,0}
+\definecolor{Operators}{rgb}{0,0,0}
+\definecolor{Background}{rgb}{0.93,0.93,0.93}
+\newcommand{\self}{\color{CadetBlue}}
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
+
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+showspaces=false,
+showtabs=false,
+showstringspaces=false,
+tabsize=2,
+breaklines=true,
+% Basic
+%basicstyle=\ttfamily\footnotesize\setstretch{1},
+basicstyle=\ttfamily\footnotesize\color{black},
+backgroundcolor=\color{Background},
+language=Python,
+% Comments
+commentstyle=\color{Comments}\slshape,
+% Strings
+stringstyle=\color{Strings},
+morecomment=[s][\color{Comments}]{"""}{"""},
+morecomment=[s][\color{Strings}]{'''}{'''},
+morecomment=[l][\color{BurntOrange}]{\@},
+% keywords
+keywordstyle={\color{Keywords}\bfseries},
+keywordstyle=[2]{\color{Magenta}\bfseries},
+keywordstyle=[3]{\color{deepred}\bfseries},
+keywords={from,class,def,for,while,if,is,in,elif,else,not,and,or,print,break,continue,return,True,False,None,access,as,del,except,exec,finally,global,lambda,pass,print,raise,try,assert},
+% additional keywords
+keywords=[2]{import, dir, range},
+keywords=[3]{__init__},
+emph={self},
+emphstyle={\self},
+%
+}}
+
+% C style for highlighting
+\newcommand\cstyle{\lstset{
+  %language=C,
+  showspaces=false,
+  showtabs=false,
+  showstringspaces=false,
+  tabsize=2,
+  basicstyle=\ttfamily\footnotesize\color{black},
+  backgroundcolor=\color{Background},
+  language=C,
+  breaklines=true,
+  % Comments
+  commentstyle=\color{Comments}\slshape,
+  % Strings
+  stringstyle=\color{Strings},
+  %keywordstyle=\color{Keywords}\ttfamily,
+  keywordstyle={\color{Keywords}\bfseries},
+  keywordstyle=[2]{\color{Magenta}\bfseries},
+  keywordstyle=[3]{\color{deepred}\bfseries},
+  keywordstyle=[4]{\color{MidnightBlue}\bfseries},
+  keywords={for, if, else, return, break, continue, do, double, float, int, char, enum, struct, long, signed, include},
+  keywords=[2]{fprintf, sprintf, printf, scanf, sscanf, fscanf},
+  keywords=[3]{class_call, class_test, class_alloc, class_calloc},
+  keywords=[4]{stderr, stdout, stdin},
+  stringstyle=\color{Strings}\ttfamily,
+  commentstyle=\color{Comments}\slshape,
+  morecomment=[l][\color{magenta}]{\#},
+  morecomment=[s][\color{Strings}]{"}{"},
+  morecomment=[s][\color{Strings}]{'}{'},
+}}
+
+% Python environment
+\lstnewenvironment{python}[1][]
+{
+\pythonstyle
+\lstset{#1}
+}
+{}
+
+% Python for external files
+\newcommand\pythonexternal[2]{{
+\pythonstyle
+\lstinputlisting[#1]{#2}}}
+
+% Python for inline
+\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+
+% C new environnement
+% Python environment
+\lstnewenvironment{class}[1][]
+{
+\cstyle
+\lstset{#1}
+}
+{}
+
+% C for external files
+\newcommand\cexternal[2]{{ 
+\cstyle
+\lstinputlisting[#1]{#2}}}
+
+\newcommand\cinline[1]{{\cstyle\lstinline[]!#1!}}
+
+% Personal colors
+\newcommand{\mygray}{\only{\color{gray}}}
+\newcommand{\mywhite}{\only{\color{white}}}
+\newcommand{\myblack}{\only{\color{black}}}
+\newcommand{\Blue}{\color{Blue}}
+\newcommand{\Red}{\color{BrickRed}}
+\newcommand{\Green}{\color{PineGreen}}
+\newcommand{\Grey}{\color{gray}}
+
+\renewcommand\mathfamilydefault{\rmdefault} 
