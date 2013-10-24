@@ -51,7 +51,8 @@ def md_to_tex(command_line, **kwargs):
     with open(tex_file, 'w') as tex_writer:
         for key, value in tex.iteritems():
             for line in value:
-                print line.rstrip('\n')
+                if verbose:
+                    print line.rstrip('\n')
                 tex_writer.write(line)
 
     return tex_file, True
@@ -110,14 +111,19 @@ def texify(source, context, transformator, verbose):
                         tex.append('\\frametitle{Outline}\n\\tableofcontents[\n')
                         tex.append('currentsection,sectionstyle=show/shaded,')
                         tex.append('subsectionstyle=show/show/hide]\n\end{frame}}\n')
+                    elif line.find('no-navigation-symbols') != -1:
+                        tex.append('\setbeamertemplate{navigation symbols}{}\n')
                     else:
                         pass
 
 
     elif context == 'body':
         tex.append('\n\\begin{document}\n')
+
+        # Search for special frames
         special = re.compile('%s\s+(.*)\s+%s' % (
             lang['md']['special-frames'][0], lang['md']['special-frames'][1]))
+
         # have different possibilities, so far this one is not very robust,
         # because need another test.
         if lang['md']['section'][1] == 'before':
@@ -133,6 +139,10 @@ def texify(source, context, transformator, verbose):
 
             # catch special frames, that are only one liners
             if special_frame is not None:
+                # first, exit current slide if any
+                if in_slide:
+                    texify_slide(tex, text[first_index:index], verbose)
+                    in_slide = False
                 action = special_frame.group(1).lower()
                 special_action(tex, action, verbose)
                 continue
@@ -144,7 +154,6 @@ def texify(source, context, transformator, verbose):
                         range(len(section.group(1))-1)])
                     if in_slide:
                         texify_slide(tex, text[first_index:index], verbose) 
-                        #slides.append([first_index, index-1])
                         in_slide = False
                     tex.append('\n\%s{%s}\n\n' % (level, section.group(2)))
 
@@ -283,15 +292,18 @@ def extract_environments(source, tex, start_index, verbose):
         if begin_env is not None:
             # if not in one: get name
             if not in_environment:
-                print ' /!\ entering env'
+                if verbose:
+                    print ' /!\ entering env'
                 in_environment = True
                 options = []
                 title = ''
                 if len(begin_env.group(1).split(';')) == 1:
-                    print '--> no options'
+                    if verbose:
+                        print '--> no options'
                     name = begin_env.group(1)
                 else:
-                    print '--> options'
+                    if verbose:
+                        print '--> options'
                     name, options = begin_env.group(1).split(';')[0], begin_env.group(1).split(';')[1].split(',')
                 if name.find('|') != -1:
                     # One can specify the title of the block with a |
@@ -360,7 +372,7 @@ def extract_environments(source, tex, start_index, verbose):
 def get_surrounding_environment(name, options, title, verbose):
     # take care of blocks
     start_line = ''
-    out, flags = parse_options(options)
+    out, flags = parse_options(options, verbose)
 
     if flags['extra_column_env']:
         start_line += '\\begin{columns}\n\column{%g\\textwidth}\n' % out['number']
@@ -375,8 +387,8 @@ def get_surrounding_environment(name, options, title, verbose):
         if flags['has_align']:
             start_line += '\\begin{%s}' % out['align']
         start_line += '\includegraphics[%s]{' % (out['option_string'])
-        if has_align:
-            stop_line += '}\caption{%s}\n\end{%s}\n' % (title, out['align'])
+        if flags['has_align']:
+            stop_line = '}\caption{%s}\n\end{%s}\n' % (title, out['align'])
         else:
             stop_line = '}\caption{%s}\n' % title
     elif name.find('verbatim') != -1:
