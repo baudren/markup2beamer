@@ -384,9 +384,15 @@ def extract_environments(source, tex, start_index, verbose):
                         continue
 
                 tex.append(line+'\n')
-        # getting out
+    # getting out
 
-    return False, index
+    # If we are still inside an environment, close it automatically:
+    if in_environment:
+        if verbose:
+            print '/!\ exiting environment'
+        tex.append(headers[1])
+        print headers[1]
+    return False, start_index+index
 
 # Define all options, like width, this kind of things, and return an array of
 # two lines, start and finish
