@@ -277,14 +277,21 @@ def texify_slide(tex, source, verbose):
 
 def extract_environments(source, tex, start_index, verbose):
 
+    # All regular expression to look out for
     env = re.compile('\s*%s\s+(.*)' % lang['md']['environments'][0])
     short_env = re.compile('\s*%s\s+(.*)\s+%s\s*' %
         (lang['md']['environments'][0], lang['md']['environments'][1]))
     list_env = re.compile('\s*([*+])([-]*)\s+(.*)')
+    # This will match strings like:
+    # I *have a complete italic statement*
+    # I **only have the start of a bold
+    #emphasis = re.compile('([^*]*)([*]+)([^* ][^*]*[^* ])([*]+.*)?')
+    emphasis = re.compile('([^*]*)([*]+)(.*)')
 
     in_environment = False
     in_list = False
     found_sub_environment = False
+    in_emph = False
 
     for index, line in enumerate(source[start_index:]):
         # if a nested environment was found, pass until index is index_nested
@@ -353,7 +360,25 @@ def extract_environments(source, tex, start_index, verbose):
                     tex.append('\\begin{%s}\n' % list_type)
                 else:
                     tex.append('\\begin{%s}[<+->]\n' % list_type)
-            tex.append('\item %s\n' % begin_list.group(3))
+            # check for emphasis, on the group not containing the first star
+            emph = emphasis.match(begin_list.group(3))
+            if emph is not None:
+                print emph.groups()
+                if emph.group(3).find(emph.group(2)) == -1:
+                    if not in_emph:
+                        in_emph = True
+                        tex.append('\item %s{%s %s\n' % (emph.group(1),
+                            get_emph(emph.group(2)), emph.group(3)))
+                    else:
+                        in_emph = False
+                        tex.append('\item %s} %s\n' % (emph.group(1), emph.group(3)))
+                else:
+                    tex.append('\item %s{%s %s} %s\n' % (emph.group(1),
+                        get_emph(emph.group(2)),
+                        emph.group(3).split(emph.group(2))[0],
+                        emph.group(3).split(emph.group(2))[1]))
+            else:
+                tex.append('\item %s\n' % begin_list.group(3))
         else:
             # if one finds the ending pattern, return success
             if line.find(lang['md']['environments'][1]) != -1:
@@ -378,12 +403,28 @@ def extract_environments(source, tex, start_index, verbose):
             else:
                 if verbose:
                     print 'normal line being written', line
-                if in_environment:
-                    if name in ['verbatim']:
-                        tex.append(line[index_to_strip:]+'\n')
-                        continue
-
-                tex.append(line+'\n')
+                if (in_environment and name in ['verbatim']):
+                    tex.append(line[index_to_strip:]+'\n')
+                    continue
+                # otherwise, check for emphasis statements
+                emph = emphasis.match(line)
+                if emph is not None:
+                    print emph.groups()
+                    if emph.group(3).find(emph.group(2)) == -1:
+                        if not in_emph:
+                            in_emph = True
+                            tex.append('%s{%s %s\n' % (emph.group(1),
+                                get_emph(emph.group(2)), emph.group(3)))
+                        else:
+                            in_emph = False
+                            tex.append('%s} %s\n' % (emph.group(1), emph.group(3)))
+                    else:
+                        tex.append('%s{%s %s} %s\n' % (emph.group(1),
+                            get_emph(emph.group(2)),
+                            emph.group(3).split(emph.group(2))[0],
+                            emph.group(3).split(emph.group(2))[1]))
+                else:
+                    tex.append(line+'\n')
     # getting out
 
     # If we are still inside an environment, close it automatically:
@@ -473,3 +514,14 @@ def read_command(argument):
         # One can specify the title of the block with a |
         name, title = name.split('|')
     return name.strip(), title.strip(), options
+
+def get_emph(markup):
+    if markup == '*':
+        return '\it'
+    elif markup == '**':
+        return '\\bf'
+    elif markup == '***':
+        return '\\bf\it'
+    else:
+        return ''
+

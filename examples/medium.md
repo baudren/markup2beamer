@@ -97,3 +97,28 @@ Or "How sphinx is magical"
         ~~~
 
     ~~~
+
+    ~~~ vspace; 0.5cm ~~~
+
+    Notice the alignment inside the verbatim environment !
+
+
+Illustration of emphasis
+-------------------------
+Different possibilities
+
+
+    ~~~ block | How to emphasize your point; 60%
+    * *an italic italian
+      on several lines*
+    * **a bold statement**
+    * `a user defined emphasize`
+
+    Note also the usage of a block without an end. It is not
+    recommanded, but can be used.
+
+
+Another Slide
+-------------
+With nothing in it
+
