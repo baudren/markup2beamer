@@ -105,8 +105,11 @@ Or "How sphinx is magical"
 
 Illustration of emphasis
 -------------------------
-Different possibilities
 
+Different possibilities: First, in a *block of text*,
+then in *a line that 
+is cut* and continues *with another* emphasis. A **bold sentence
+will be gobbled as well**
 
     ~~~ block | How to emphasize your point; 60%
     * *an italic italian

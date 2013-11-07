@@ -286,12 +286,11 @@ def extract_environments(source, tex, start_index, verbose):
     # I *have a complete italic statement*
     # I **only have the start of a bold
     #emphasis = re.compile('([^*]*)([*]+)([^* ][^*]*[^* ])([*]+.*)?')
-    emphasis = re.compile('([^*]*)([*]+)(.*)')
-
     in_environment = False
     in_list = False
     found_sub_environment = False
-    in_emph = False
+
+    text_buffer = ''
 
     for index, line in enumerate(source[start_index:]):
         # if a nested environment was found, pass until index is index_nested
@@ -305,7 +304,9 @@ def extract_environments(source, tex, start_index, verbose):
         has_short_env = short_env.match(line)
         begin_list = list_env.match(line)
         # enter one environment,
-        # Please note that an environment can not appear inside a list...
+        # Please note that an environment can not appear inside a list
+        # Note as well that entering an environment will print the current
+        # buffer, after taking into account emphasis
         if begin_env is not None:
             # First, test if it is a short environment
             if has_short_env is not None:
@@ -322,6 +323,7 @@ def extract_environments(source, tex, start_index, verbose):
 
             # if not in one: get name
             elif not in_environment:
+                text_buffer = apply_emphasis(tex, text_buffer)
                 if verbose:
                     print ' /!\ entering env'
                 in_environment = True
@@ -348,6 +350,7 @@ def extract_environments(source, tex, start_index, verbose):
             if verbose:
                 line, 'detected a list'
             if not in_list:
+                text_buffer = apply_emphasis(tex, text_buffer)
                 in_list = True
                 # Recover the type of the list
                 if begin_list.group(1) == '+':
@@ -360,34 +363,18 @@ def extract_environments(source, tex, start_index, verbose):
                     tex.append('\\begin{%s}\n' % list_type)
                 else:
                     tex.append('\\begin{%s}[<+->]\n' % list_type)
-            # check for emphasis, on the group not containing the first star
-            emph = emphasis.match(begin_list.group(3))
-            if emph is not None:
-                print emph.groups()
-                if emph.group(3).find(emph.group(2)) == -1:
-                    if not in_emph:
-                        in_emph = True
-                        tex.append('\item %s{%s %s\n' % (emph.group(1),
-                            get_emph(emph.group(2)), emph.group(3)))
-                    else:
-                        in_emph = False
-                        tex.append('\item %s} %s\n' % (emph.group(1), emph.group(3)))
-                else:
-                    tex.append('\item %s{%s %s} %s\n' % (emph.group(1),
-                        get_emph(emph.group(2)),
-                        emph.group(3).split(emph.group(2))[0],
-                        emph.group(3).split(emph.group(2))[1]))
-            else:
-                tex.append('\item %s\n' % begin_list.group(3))
+            text_buffer += '\item %s\n' % begin_list.group(3)
         else:
             # if one finds the ending pattern, return success
             if line.find(lang['md']['environments'][1]) != -1:
                 if in_list:
+                    text_buffer = apply_emphasis(tex, text_buffer)
                     tex.append('\end{%s}\n' % list_type)
                     if verbose:
                         print '/!\ exiting list'
                     in_list = False
                 if in_environment:
+                    text_buffer = apply_emphasis(tex, text_buffer)
                     if verbose:
                         print '/!\ exiting environment'
                     tex.append(headers[1])
@@ -396,43 +383,29 @@ def extract_environments(source, tex, start_index, verbose):
                 if in_list:
                     if verbose:
                         print 'I discovered an empty line, getting out of itemize'
+                    text_buffer = apply_emphasis(tex, text_buffer)
                     tex.append('\end{%s}\n' % list_type)
                     in_list = False
                 else:
-                    tex.append('\n')
+                    text_buffer += '\n'
             else:
                 if verbose:
                     print 'normal line being written', line
+                # TODO change verbatim by verbatim, python, etc...
                 if (in_environment and name in ['verbatim']):
                     tex.append(line[index_to_strip:]+'\n')
                     continue
-                # otherwise, check for emphasis statements
-                emph = emphasis.match(line)
-                if emph is not None:
-                    print emph.groups()
-                    if emph.group(3).find(emph.group(2)) == -1:
-                        if not in_emph:
-                            in_emph = True
-                            tex.append('%s{%s %s\n' % (emph.group(1),
-                                get_emph(emph.group(2)), emph.group(3)))
-                        else:
-                            in_emph = False
-                            tex.append('%s} %s\n' % (emph.group(1), emph.group(3)))
-                    else:
-                        tex.append('%s{%s %s} %s\n' % (emph.group(1),
-                            get_emph(emph.group(2)),
-                            emph.group(3).split(emph.group(2))[0],
-                            emph.group(3).split(emph.group(2))[1]))
-                else:
-                    tex.append(line+'\n')
+                text_buffer += line+'\n'
     # getting out
 
     # If we are still inside an environment, close it automatically:
     if in_environment:
         if verbose:
             print '/!\ exiting environment'
+        text_buffer = apply_emphasis(tex, text_buffer)
         tex.append(headers[1])
         print headers[1]
+    text_buffer = apply_emphasis(tex, text_buffer)
     return False, start_index+index
 
 # Define all options, like width, this kind of things, and return an array of
@@ -515,13 +488,24 @@ def read_command(argument):
         name, title = name.split('|')
     return name.strip(), title.strip(), options
 
-def get_emph(markup):
-    if markup == '*':
-        return '\it'
-    elif markup == '**':
-        return '\\bf'
-    elif markup == '***':
-        return '\\bf\it'
-    else:
-        return ''
+def apply_emphasis(tex, text_buffer):
+    """
+    The text buffer contains concatenated lines, with line breaks, to treat
+    through emphasis detection
+
+    """
+
+    #emphasis = re.compile('([^*]*)([*]+)(.*)')
+    bf_it = re.compile("( \*{3})([^ \*].*?[^ \*])(\*{3})", re.DOTALL)
+    bf = re.compile("( \*{2})([^ \*].*?[^ \*])(\*{2})", re.DOTALL)
+    it = re.compile("( \*{1})([^ \*].*?[^ \*])(\*{1})", re.DOTALL)
+    # The option re.DOTALL ensures that the newlines are considered as part of .
+
+    text_buffer = bf_it.sub(r" {\\bf\\it \2} ", text_buffer)
+    text_buffer = bf.sub(r" {\\bf \2} ", text_buffer)
+    text_buffer = it.sub(r" {\\it \2} ", text_buffer)
+
+    tex.append(text_buffer)
+
+    return ''
 
