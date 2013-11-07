@@ -14,8 +14,8 @@ o have a short environment type (for commands like vspace, column)
 ~ recognise *toto*, **toto**, for it and bf,  and `toto`, ``toto``,
   ```toto``` for user defined emphasis (like \color{BrickRed}\bf,
   etc). So far, no user defined !
-- being able to use a * in a math environment without interpretating
-  it !
+o being able to use a * in a math environment without interpretating
+  it ! (should work)
 - specify in headers which environments should start a fragile
   environment
 - being able to specify 'fragile' for a given slide.

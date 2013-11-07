@@ -123,5 +123,6 @@ will be gobbled as well**
 
 Another Slide
 -------------
-With nothing in it
+
+With math $2*2 = 4$ in it.
 
