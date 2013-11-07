@@ -1,7 +1,7 @@
 o if an input command is in the headers, do not include a
   \documentclass command
 o have a clean way of asking for \only, in blocks ...
-- and generally
+- and anywhere
 o support images
 o allow for slides with no Title (None), and coming before the title
   and outline slide
@@ -15,3 +15,7 @@ o have a short environment type (for commands like vspace, column)
   ```toto``` for user defined emphasis (like \color{BrickRed}\bf,
   etc). So far, no user defined, and not recognised everywhere, only in
   body: make something more general !
+- being able to escape \*
+- specify in headers which environments should start a fragile
+  environment
+- being able to specify 'fragile' for a given slide.
