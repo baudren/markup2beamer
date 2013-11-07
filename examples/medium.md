@@ -105,6 +105,7 @@ Or "How sphinx is magical"
 
 Illustration of emphasis
 -------------------------
+Note: you can ***do it in the titles***
 
 Different possibilities: First, in a *block of text*,
 then in *a line that 

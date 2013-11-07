@@ -256,6 +256,9 @@ def texify_slide(tex, source, verbose):
             fragile = True
             break
 
+    title = apply_emphasis([], title, erase=False)
+    subtitle = apply_emphasis([], subtitle, erase=False)
+
     # think about options syntax, like t, b, etc.
     options = ''
     if fragile:
@@ -323,14 +326,15 @@ def extract_environments(source, tex, start_index, verbose):
 
             # if not in one: get name
             elif not in_environment:
-                text_buffer = apply_emphasis(tex, text_buffer)
                 if verbose:
                     print ' /!\ entering env'
                 in_environment = True
                 name, title, options = read_command(begin_env.group(1))
                 headers = get_surrounding_environment(name, options,
                         title, verbose)
-                tex.append(headers[0])
+                text_buffer += headers[0]
+                text_buffer = apply_emphasis(tex, text_buffer)
+                #tex.append(headers[0])
                 # in the case of verbatim environment, spacing matter: recover
                 # the index of the first character of the line
                 if name in ['verbatim']:
@@ -374,9 +378,9 @@ def extract_environments(source, tex, start_index, verbose):
                         print '/!\ exiting list'
                     in_list = False
                 if in_environment:
-                    text_buffer = apply_emphasis(tex, text_buffer)
                     if verbose:
                         print '/!\ exiting environment'
+                    text_buffer = apply_emphasis(tex, text_buffer)
                     tex.append(headers[1])
                     return True, start_index + index
             elif line.strip() == '':
@@ -488,7 +492,7 @@ def read_command(argument):
         name, title = name.split('|')
     return name.strip(), title.strip(), options
 
-def apply_emphasis(tex, text_buffer):
+def apply_emphasis(tex, text_buffer, erase=True):
     """
     The text buffer contains concatenated lines, with line breaks, to treat
     through emphasis detection
@@ -505,7 +509,9 @@ def apply_emphasis(tex, text_buffer):
     text_buffer = bf.sub(r" {\\bf \2} ", text_buffer)
     text_buffer = it.sub(r" {\\it \2} ", text_buffer)
 
-    tex.append(text_buffer)
-
-    return ''
+    if erase:
+        tex.append(text_buffer)
+        return ''
+    else:
+        return text_buffer
 
