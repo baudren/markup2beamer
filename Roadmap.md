@@ -19,3 +19,8 @@ o being able to use a * in a math environment without interpretating
 - specify in headers which environments should start a fragile
   environment
 o being able to specify 'fragile' for a given slide.
+- detect language from extension
+- automatic installer (decide between setup.py and a normal python
+  file)
+- can be run as a script (if the file changed on disk, reapply the
+  convert, texify, and output)
