@@ -18,4 +18,4 @@ o being able to use a * in a math environment without interpretating
   it ! (should work)
 - specify in headers which environments should start a fragile
   environment
-- being able to specify 'fragile' for a given slide.
+o being able to specify 'fragile' for a given slide.

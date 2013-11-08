@@ -159,6 +159,8 @@ def texify(source, context, transformator, verbose):
 
             # Catch title frame
             elif line.find(lang['md']['frame-title'][0]) != -1:
+                # Recover potential options at the end of the line, like
+                # ------- fragile, t
                 # This will be triggered at the first slide, and after sections
                 if not in_slide:
                     in_slide = True
@@ -241,7 +243,11 @@ def special_action(tex, action, verbose):
     tex.append('\end{frame}\n')
 
 def texify_slide(tex, source, verbose):
-    title = source[0]
+    # recover possible slide options
+    if len(source[0].split('|')) > 1:
+        title, options = [elem.strip() for elem in source[0].split('|')]
+    else:
+        title, options = source[0], ''
     if title == 'None':
         title = ''
     if source[2] != '':
@@ -260,9 +266,10 @@ def texify_slide(tex, source, verbose):
     subtitle = apply_emphasis([], subtitle, erase=False)
 
     # think about options syntax, like t, b, etc.
-    options = ''
+    print options
     if fragile:
-        options += 'fragile'
+        if 'fragile' not in options:
+            options = ','.join(options.split(',')+['fragile'])
 
     if options != '':
         tex.append('\n\\begin{frame}[%s]{%s}{%s}\n' % (options, title, subtitle))
