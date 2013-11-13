@@ -57,12 +57,23 @@ def md_to_tex(command_line, **kwargs):
 
     return tex_file, True
 
-def tex_to_pdf(tex_file, verbose):
+def tex_to_pdf(tex_file, pdf_file):
 
     # Simply run twice pdflatex 
+    local_tex = tex_file.split(os.path.sep)[-1]
     os.chdir(os.path.sep.join(tex_file.split(os.path.sep)[:-1]))
+
+    if not pdf_file:
+        pdf_file = local_tex.replace('.tex', '.pdf')
+    else:
+        pdf_file = pdf_file.split(os.path.sep)[-1]
+
+    a = sp.call(["pdflatex", local_tex])
+    print a
+    b = sp.call(["open", pdf_file])
+    print b
     
-    return False
+    return True
 
 def texify(source, context, transformator, verbose):
 
@@ -266,10 +277,11 @@ def texify_slide(tex, source, verbose):
     subtitle = apply_emphasis([], subtitle, erase=False)
 
     # think about options syntax, like t, b, etc.
-    print options
     if fragile:
         if 'fragile' not in options:
-            options = ','.join(options.split(',')+['fragile'])
+            options_array = [elem for elem in options.split(',') if elem]
+            options_array.append('fragile')
+            options = ','.join(options_array)
 
     if options != '':
         tex.append('\n\\begin{frame}[%s]{%s}{%s}\n' % (options, title, subtitle))

@@ -6,6 +6,9 @@
 
 import parser_md2b
 import file_process as fp
+import language
+
+import os
 
 def md2beamer():
     """
@@ -15,6 +18,20 @@ def md2beamer():
     # Parsing line argument
     command_line = parser_md2b.parse()
 
+    # Recovering the format of the input file
+    extension = command_line.input.split(os.path.sep)[-1].split('.')[-1]
+
+    # Read all possibles extension in language file
+    supported_extensions = language.language_definition.keys()
+
+    if extension not in supported_extensions:
+        print 'Your input file has a', extension, 'format, currently unsupported'
+        print 'Develop your own format, or use one of the following'
+        for ext in supported_extensions:
+            print ext,
+        print '\nExiting now'
+        return
+    
     # Text treatment from md to latex
     tex_file, success = fp.md_to_tex(command_line)
 
