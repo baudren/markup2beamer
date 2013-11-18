@@ -5,6 +5,7 @@ import re
 import os
 import subprocess as sp
 
+
 def md_to_tex(command_line, **kwargs):
 
     # create references to some command_line variables for convenience.
@@ -21,7 +22,7 @@ def md_to_tex(command_line, **kwargs):
     # Create a dictionnary that will store as a string the lines it started
     # from in the md file, and the resulting process written on the tex.
     transformator = od()
-    
+
     # Recover entire file
     with open(md_file, 'r') as md:
         for index, line in enumerate(md):
@@ -57,9 +58,10 @@ def md_to_tex(command_line, **kwargs):
 
     return tex_file, True
 
+
 def tex_to_pdf(tex_file, pdf_file):
 
-    # Simply run twice pdflatex 
+    # Simply run twice pdflatex
     local_tex = tex_file.split(os.path.sep)[-1]
     os.chdir(os.path.sep.join(tex_file.split(os.path.sep)[:-1]))
 
@@ -72,8 +74,9 @@ def tex_to_pdf(tex_file, pdf_file):
     print a
     b = sp.call(["open", pdf_file])
     print b
-    
+
     return True
+
 
 def texify(source, context, transformator, verbose):
 
@@ -84,7 +87,7 @@ def texify(source, context, transformator, verbose):
 
     text = deepcopy(source[start_index:stop_index])
     if verbose:
-        print 'Trying to texify the following',text
+        print 'Trying to texify the following', text
         print 'in the context of', context
 
     tex = []
@@ -98,7 +101,8 @@ def texify(source, context, transformator, verbose):
                     # on the first line, either an input or document class
                     if len(tex) == 0:
                         if action != 'input':
-                            tex.append('\documentclass[xcolor=dvipsnames]{beamer}\n')
+                            tex.append('\documentclass\
+                                [xcolor=dvipsnames]{beamer}\n')
                     # Strip out spaces from both sides
                     arguments = arguments.strip()
                     for argument in arguments.split(','):
@@ -111,22 +115,26 @@ def texify(source, context, transformator, verbose):
                             main = argument[temp.end():].strip()
                             if action == 'title':
                                 main = title
-                            tex.append('\%s[%s]{%s}\n' % (action, option, main))
+                            tex.append('\%s[%s]{%s}\n' % (
+                                action, option, main))
                         else:
                             tex.append(
                                 '\%s{%s}\n' % (action, argument))
                 # if there was no :, it means it is a special command
                 except:
                     if line.find('outline-at-sections') != -1:
-                        tex.append('\AtBeginSection[]\n{\\begin{frame}<beamer>\n')
-                        tex.append('\\frametitle{Outline}\n\\tableofcontents[\n')
+                        tex.append('\AtBeginSection[]\n\
+                            {\\begin{frame}<beamer>\n')
+                        tex.append('\\frametitle{Outline}\n\
+                            \\tableofcontents[\n')
                         tex.append('currentsection,sectionstyle=show/shaded,')
-                        tex.append('subsectionstyle=show/show/hide]\n\end{frame}}\n')
+                        tex.append('subsectionstyle=show/show/hide]\n\
+                            \end{frame}}\n')
                     elif line.find('no-navigation-symbols') != -1:
-                        tex.append('\setbeamertemplate{navigation symbols}{}\n')
+                        tex.append('\setbeamertemplate\
+                            {navigation symbols}{}\n')
                     else:
                         pass
-
 
     elif context == 'body':
         tex.append('\n\\begin{document}\n')
@@ -182,15 +190,15 @@ def texify(source, context, transformator, verbose):
                     last_index = index-2
                     texify_slide(tex, text[first_index:last_index+1], verbose)
                     first_index = index-1
-                
+
             # when reaching the end, wrap up
             if index == len(text)-1:
                 texify_slide(tex, text[first_index:index+1], verbose)
 
         tex.append('\n\end{document}\n')
 
-
     return tex
+
 
 # define helper function
 def catch(source, start_index, context, verbose):
@@ -218,7 +226,7 @@ def catch(source, start_index, context, verbose):
     # else, do a catch between the start and stop
     # Recover the exact first line
     first_temp = [elem for elem in source[start_index:] if
-            elem.find(start_string) != -1]
+                  elem.find(start_string) != -1]
     try:
         first_index = source[start_index:].index(first_temp[0])+start_index
     except IndexError:
@@ -227,17 +235,19 @@ def catch(source, start_index, context, verbose):
 
     # Recover the exact last line
     second_temp = [elem for elem in source[first_index+1:] if
-            elem.find(stop_string) != -1]
+                   elem.find(stop_string) != -1]
     try:
-        second_index = source[first_index+1:].index(second_temp[0])+first_index+1
+        second_index = (source[first_index+1:].index(second_temp[0]) +
+                        first_index+1)
     except IndexError:
         # this means the finishing line was not found
         return [first_index, None], first_index+1
 
     return [first_index, second_index+1], second_index+1
 
+
 def special_action(tex, action, verbose):
-    
+
     tex.append('\\begin{frame}\n')
     if action == 'title':
         tex.append('\\titlepage\n')
@@ -252,6 +262,7 @@ def special_action(tex, action, verbose):
     else:
         print 'warning, %s not understood', action
     tex.append('\end{frame}\n')
+
 
 def texify_slide(tex, source, verbose):
     # recover possible slide options
@@ -284,7 +295,8 @@ def texify_slide(tex, source, verbose):
             options = ','.join(options_array)
 
     if options != '':
-        tex.append('\n\\begin{frame}[%s]{%s}{%s}\n' % (options, title, subtitle))
+        tex.append('\n\\begin{frame}[%s]{%s}{%s}\n' % (
+            options, title, subtitle))
     else:
         tex.append('\n\\begin{frame}{%s}{%s}\n' % (title, subtitle))
 
@@ -296,6 +308,7 @@ def texify_slide(tex, source, verbose):
             break
 
     tex.append('\n\end{frame}\n')
+
 
 def extract_environments(source, tex, start_index, verbose):
 
@@ -349,8 +362,8 @@ def extract_environments(source, tex, start_index, verbose):
                     print ' /!\ entering env'
                 in_environment = True
                 name, title, options = read_command(begin_env.group(1))
-                headers = get_surrounding_environment(name, options,
-                        title, verbose)
+                headers = get_surrounding_environment(
+                    name, options, title, verbose)
                 text_buffer += headers[0]
                 text_buffer = apply_emphasis(tex, text_buffer)
                 #tex.append(headers[0])
@@ -364,8 +377,8 @@ def extract_environments(source, tex, start_index, verbose):
                 index_nested = start_index+index
                 if verbose:
                     print 'found nested env'
-                success, index_nested = extract_environments(source, tex,
-                    index_nested, verbose)
+                success, index_nested = extract_environments(
+                    source, tex, index_nested, verbose)
                 found_sub_environment = True
                 continue
         # Entering a list environment.
@@ -405,7 +418,8 @@ def extract_environments(source, tex, start_index, verbose):
             elif line.strip() == '':
                 if in_list:
                     if verbose:
-                        print 'I discovered an empty line, getting out of itemize'
+                        print('I discovered an empty line, \
+                            getting out of itemize')
                     text_buffer = apply_emphasis(tex, text_buffer)
                     tex.append('\end{%s}\n' % list_type)
                     in_list = False
@@ -431,6 +445,7 @@ def extract_environments(source, tex, start_index, verbose):
     text_buffer = apply_emphasis(tex, text_buffer)
     return False, start_index+index
 
+
 # Define all options, like width, this kind of things, and return an array of
 # two lines, start and finish
 def get_surrounding_environment(name, options, title, verbose):
@@ -439,11 +454,12 @@ def get_surrounding_environment(name, options, title, verbose):
     out, flags = parse_options(options, verbose)
 
     if flags['extra_column_env']:
-        start_line += '\\begin{columns}\n\column{%g\\textwidth}\n' % out['number']
+        start_line += '\\begin{columns}\n\
+            \column{%g\\textwidth}\n' % out['number']
 
     if name.find('block') != -1:
-        start_line += '\\begin{%s}{%s}%s\n' % (name.strip(), title,
-            out['slide_show'])
+        start_line += '\\begin{%s}{%s}%s\n' % (
+            name.strip(), title, out['slide_show'])
         stop_line = '\end{%s}\n' % name.strip()
 
     elif name.find('image') != -1:
@@ -465,11 +481,12 @@ def get_surrounding_environment(name, options, title, verbose):
                     print 'no width specified, expecting column arguments'
                 start_line += '\\begin{columns}\n'
             else:
-                start_line += '\\begin{columns}\n\column{%g\\textwidth}\n' % out['number']
+                start_line += '\\begin{columns}\
+                    \n\column{%g\\textwidth}\n' % out['number']
             stop_line = '\end{columns}\n'
         else:
-            start_line = '\\begin{%s}[%s]%s\n' % (name.strip(),
-                out['option_string'], out['slide_show'])
+            start_line = '\\begin{%s}[%s]%s\n' % (
+                name.strip(), out['option_string'], out['slide_show'])
             stop_line = '\end{%s}\n' % name.strip()
     # Finishing the extra columns
     if flags['extra_column_env']:
@@ -477,11 +494,12 @@ def get_surrounding_environment(name, options, title, verbose):
 
     return [start_line, stop_line]
 
+
 def parse_options(options, verbose):
 
-    out = {'option_string':'', 'slide_show':'', 'number':0, 'align':''}
+    out = {'option_string': '', 'slide_show': '', 'number': 0, 'align': ''}
 
-    flags = {'extra_column_env':False, 'has_align':False}
+    flags = {'extra_column_env': False, 'has_align': False}
 
     for option in options:
         if option.find('%') != -1:
