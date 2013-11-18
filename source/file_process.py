@@ -16,8 +16,11 @@ def markup_to_tex(command_line, **kwargs):
     markup_file = command_line.input
     verbose = command_line.verbose
 
+    # Store the extension because it will be called often
+    ext = command_line.extension
+
     # Create a temporary tex file
-    tex_file = markup_file.replace(command_line.extension, '.tex')
+    tex_file = markup_file.replace('.'+command_line.extension, '.tex')
     source = []
 
     # Define the sequence of different parts in the text file
@@ -39,7 +42,7 @@ def markup_to_tex(command_line, **kwargs):
     # is processed.
     for name in parts:
         transformator[name], current_line = catch(
-            source, current_line, name, verbose)
+            source, current_line, name, ext, verbose)
     """
     .. warning::
 
@@ -226,7 +229,7 @@ def extract_header_command(line, title, tex):
 
 
 # define helper function
-def catch(source, start_index, context, verbose):
+def catch(source, start_index, context, ext, verbose):
     """
     Recover element surrounded by given start and stop strings
 
