@@ -6,26 +6,30 @@ import os
 import subprocess as sp
 
 
-def md_to_tex(command_line, **kwargs):
+def markup_to_tex(command_line, **kwargs):
+    """
+    Preprocess the markup file to tex output
+
+    """
 
     # create references to some command_line variables for convenience.
-    md_file = command_line.input
+    markup_file = command_line.input
     verbose = command_line.verbose
 
     # Create a temporary tex file
-    tex_file = md_file.replace('.md', '.tex')
+    tex_file = markup_file.replace(command_line.extension, '.tex')
     source = []
 
     # Define the sequence of different parts in the text file
     parts = ['headers', 'title', 'body']
 
     # Create a dictionnary that will store as a string the lines it started
-    # from in the md file, and the resulting process written on the tex.
+    # from in the markup file, and the resulting process written on the tex.
     transformator = od()
 
     # Recover entire file
-    with open(md_file, 'r') as md:
-        for index, line in enumerate(md):
+    with open(markup_file, 'r') as markup:
+        for index, line in enumerate(markup):
             source.append(line.strip('\n').rstrip())
 
     # Recover sequentially the different parts.
@@ -47,7 +51,9 @@ def md_to_tex(command_line, **kwargs):
     tex = od()
 
     for name in ['headers', 'body']:
-        tex[name] = texify(source, name, transformator, verbose)
+        tex[name] = texify(
+            source, name, transformator,
+            command_line.extension, verbose)
 
     with open(tex_file, 'w') as tex_writer:
         for key, value in tex.iteritems():
@@ -60,6 +66,13 @@ def md_to_tex(command_line, **kwargs):
 
 
 def tex_to_pdf(tex_file, pdf_file):
+    """
+    Run once a pdflatex compilation, and open the pdf file
+
+    .. warning::
+        So far, only for Mac users with the open command
+
+    """
 
     # Simply run twice pdflatex
     local_tex = tex_file.split(os.path.sep)[-1]
@@ -70,15 +83,14 @@ def tex_to_pdf(tex_file, pdf_file):
     else:
         pdf_file = pdf_file.split(os.path.sep)[-1]
 
-    a = sp.call(["pdflatex", local_tex])
-    print a
-    b = sp.call(["open", pdf_file])
-    print b
+    sp.call(["pdflatex", local_tex])
+    sp.call(["pdflatex", local_tex])
+    sp.call(["open", pdf_file])
 
     return True
 
 
-def texify(source, context, transformator, verbose):
+def texify(source, context, transformator, ext, verbose):
 
     start_index = transformator[context][0]
     stop_index = transformator[context][1]
@@ -96,58 +108,20 @@ def texify(source, context, transformator, verbose):
         # must extract syntax and transform into latex commands
         for line in text:
             if len(line) != 0:
-                try:
-                    action, arguments = line.split(':')
-                    # on the first line, either an input or document class
-                    if len(tex) == 0:
-                        if action != 'input':
-                            tex.append('\documentclass\
-                                [xcolor=dvipsnames]{beamer}\n')
-                    # Strip out spaces from both sides
-                    arguments = arguments.strip()
-                    for argument in arguments.split(','):
-                        argument = argument.strip()
-                        if argument.find('[') != -1:
-                            # the argument contains extra information
-                            m = re.compile('\[.*\]')
-                            temp = m.match(argument)
-                            option = temp.group()[1:-1]
-                            main = argument[temp.end():].strip()
-                            if action == 'title':
-                                main = title
-                            tex.append('\%s[%s]{%s}\n' % (
-                                action, option, main))
-                        else:
-                            tex.append(
-                                '\%s{%s}\n' % (action, argument))
-                # if there was no :, it means it is a special command
-                except:
-                    if line.find('outline-at-sections') != -1:
-                        tex.append('\AtBeginSection[]\n\
-                            {\\begin{frame}<beamer>\n')
-                        tex.append('\\frametitle{Outline}\n\
-                            \\tableofcontents[\n')
-                        tex.append('currentsection,sectionstyle=show/shaded,')
-                        tex.append('subsectionstyle=show/show/hide]\n\
-                            \end{frame}}\n')
-                    elif line.find('no-navigation-symbols') != -1:
-                        tex.append('\setbeamertemplate\
-                            {navigation symbols}{}\n')
-                    else:
-                        pass
+                extract_header_command(line, title, tex)
 
     elif context == 'body':
         tex.append('\n\\begin{document}\n')
 
         # Search for special frames
         special = re.compile('%s\s+(.*)\s+%s' % (
-            lang['md']['special-frames'][0], lang['md']['special-frames'][1]))
+            lang[ext]['special-frames'][0], lang[ext]['special-frames'][1]))
 
         # have different possibilities, so far this one is not very robust,
         # because need another test.
-        if lang['md']['section'][1] == 'before':
-            sections = re.compile('(%s+)\s(.*)' % (lang['md']['section'][0]))
-                #lang['md']['section'][0]))
+        if lang[ext]['section'][1] == 'before':
+            sections = re.compile('(%s+)\s(.*)' % (lang[ext]['section'][0]))
+                #lang[ext]['section'][0]))
 
         # initialize position tracking
         in_slide = False
@@ -156,28 +130,8 @@ def texify(source, context, transformator, verbose):
             special_frame = special.match(line)
             section = sections.match(line)
 
-            # catch special frames, that are only one liners
-            if special_frame is not None:
-                # first, exit current slide if any
-                if in_slide:
-                    texify_slide(tex, text[first_index:index], verbose)
-                    in_slide = False
-                action = special_frame.group(1).lower()
-                special_action(tex, action, verbose)
-                continue
-
-            # catch (sub)sections
-            elif section is not None:
-                if section.group(2).find(lang['md']['section'][0]) == -1:
-                    level = '%ssection' % ''.join(['sub' for i in
-                        range(len(section.group(1))-1)])
-                    if in_slide:
-                        texify_slide(tex, text[first_index:index], verbose) 
-                        in_slide = False
-                    tex.append('\n\%s{%s}\n\n' % (level, section.group(2)))
-
             # Catch title frame
-            elif line.find(lang['md']['frame-title'][0]) != -1:
+            if line.find(lang[ext]['frame-title'][0]) != -1:
                 # Recover potential options at the end of the line, like
                 # ------- fragile, t
                 # This will be triggered at the first slide, and after sections
@@ -188,16 +142,87 @@ def texify(source, context, transformator, verbose):
                 # triggered when reaching the end of a slide
                 else:
                     last_index = index-2
-                    texify_slide(tex, text[first_index:last_index+1], verbose)
+                    texify_slide(
+                        tex, text[first_index:last_index+1], ext, verbose)
                     first_index = index-1
+
+            # catch special frames, that are only one liners
+            elif special_frame is not None:
+                # first, exit current slide if any
+                if in_slide:
+                    texify_slide(
+                        tex, text[first_index:index], ext, verbose)
+                    in_slide = False
+                action = special_frame.group(1).lower()
+                special_action(tex, action, verbose)
+                continue
+
+            # catch (sub)sections
+            elif section is not None:
+                if section.group(2).find(lang[ext]['section'][0]) == -1:
+                    level = '%ssection' % ''.join(
+                        ['sub' for i in range(len(section.group(1))-1)])
+                    if in_slide:
+                        texify_slide(
+                            tex, text[first_index:index], ext, verbose)
+                        in_slide = False
+                    tex.append('\n\%s{%s}\n\n' % (level, section.group(2)))
 
             # when reaching the end, wrap up
             if index == len(text)-1:
-                texify_slide(tex, text[first_index:index+1], verbose)
+                texify_slide(
+                    tex, text[first_index:index+1], ext, verbose)
 
         tex.append('\n\end{document}\n')
 
     return tex
+
+
+def extract_header_command(line, title, tex):
+
+    is_normal_command = False
+    if line.find(':') != -1:
+        is_normal_command = True
+
+    if is_normal_command:
+        action, arguments = line.split(':')
+        # on the first line, either an input or document class
+        if len(tex) == 0:
+            if action != 'input':
+                tex.append('\documentclass\
+                    [xcolor=dvipsnames]{beamer}\n')
+        # Strip out spaces from both sides
+        arguments = arguments.strip()
+        for argument in arguments.split(','):
+            argument = argument.strip()
+            if argument.find('[') != -1:
+                # the argument contains extra information
+                m = re.compile('\[.*\]')
+                temp = m.match(argument)
+                option = temp.group()[1:-1]
+                main = argument[temp.end():].strip()
+                if action == 'title':
+                    main = title
+                tex.append('\%s[%s]{%s}\n' % (
+                    action, option, main))
+            else:
+                tex.append(
+                    '\%s{%s}\n' % (action, argument))
+    # if there was no :, it means it is a special command
+    else:
+        if line.find('outline-at-sections') != -1:
+            tex.append('\AtBeginSection[]\n\
+                {\\begin{frame}<beamer>\n')
+            tex.append('\\frametitle{Outline}\n\
+                \\tableofcontents[\n')
+            tex.append('currentsection,sectionstyle=show/shaded,')
+            tex.append('subsectionstyle=show/show/hide]\n\
+                \end{frame}}\n')
+        elif line.find('no-navigation-symbols') != -1:
+            tex.append('\setbeamertemplate\
+                {navigation symbols}{}\n')
+        else:
+            pass
 
 
 # define helper function
@@ -217,7 +242,7 @@ def catch(source, start_index, context, verbose):
     """
 
     # Recover start and stop strings definition from the language file
-    start_string, stop_string = lang['md'][context]
+    start_string, stop_string = lang[ext][context]
 
     # If the end is nothing, goble the rest of the file
     if stop_string == '':
@@ -264,7 +289,7 @@ def special_action(tex, action, verbose):
     tex.append('\end{frame}\n')
 
 
-def texify_slide(tex, source, verbose):
+def texify_slide(tex, source, ext, verbose):
     # recover possible slide options
     if len(source[0].split('|')) > 1:
         title, options = [elem.strip() for elem in source[0].split('|')]
@@ -303,19 +328,22 @@ def texify_slide(tex, source, verbose):
     # loop on the slide, have a nested way of deciphering environments.
     index = 3
     while True:
-        success, index = extract_environments(source, tex, index, verbose)
+        success, index = extract_environments(
+            source, tex, index, ext, verbose)
         if not success:
             break
 
     tex.append('\n\end{frame}\n')
 
 
-def extract_environments(source, tex, start_index, verbose):
+def extract_environments(source, tex, start_index, ext, verbose):
 
     # All regular expression to look out for
-    env = re.compile('\s*%s\s+(.*)' % lang['md']['environments'][0])
-    short_env = re.compile('\s*%s\s+(.*)\s+%s\s*' %
-        (lang['md']['environments'][0], lang['md']['environments'][1]))
+    env = re.compile('\s*%s\s+(.*)' % lang[ext]['environments'][0])
+    short_env = re.compile(
+        '\s*%s\s+(.*)\s+%s\s*' % (
+            lang[ext]['environments'][0],
+            lang[ext]['environments'][1]))
     list_env = re.compile('\s*([*+])([-]*)\s+(.*)')
     # This will match strings like:
     # I *have a complete italic statement*
@@ -378,7 +406,7 @@ def extract_environments(source, tex, start_index, verbose):
                 if verbose:
                     print 'found nested env'
                 success, index_nested = extract_environments(
-                    source, tex, index_nested, verbose)
+                    source, tex, index_nested, ext, verbose)
                 found_sub_environment = True
                 continue
         # Entering a list environment.
@@ -402,7 +430,7 @@ def extract_environments(source, tex, start_index, verbose):
             text_buffer += '\item %s\n' % begin_list.group(3)
         else:
             # if one finds the ending pattern, return success
-            if line.find(lang['md']['environments'][1]) != -1:
+            if line.find(lang[ext]['environments'][1]) != -1:
                 if in_list:
                     text_buffer = apply_emphasis(tex, text_buffer)
                     tex.append('\end{%s}\n' % list_type)
@@ -516,6 +544,7 @@ def parse_options(options, verbose):
 
     return out, flags
 
+
 def read_command(argument):
 
     options = []
@@ -523,11 +552,13 @@ def read_command(argument):
     if len(argument.split(';')) == 1:
         name = argument
     else:
-        name, options = argument.split(';')[0], argument.split(';')[1].split(',')
+        name, options = (
+            argument.split(';')[0], argument.split(';')[1].split(','))
     if name.find('|') != -1:
         # One can specify the title of the block with a |
         name, title = name.split('|')
     return name.strip(), title.strip(), options
+
 
 def apply_emphasis(tex, text_buffer, erase=True):
     """
@@ -540,7 +571,7 @@ def apply_emphasis(tex, text_buffer, erase=True):
     bf_it = re.compile("( \*{3})([^ \*].*?[^ \*])(\*{3})", re.DOTALL)
     bf = re.compile("( \*{2})([^ \*].*?[^ \*])(\*{2})", re.DOTALL)
     it = re.compile("( \*{1})([^ \*].*?[^ \*])(\*{1})", re.DOTALL)
-    # The option re.DOTALL ensures that the newlines are considered as part of .
+    # The option DOTALL ensures that the newlines are considered as part of .
 
     text_buffer = bf_it.sub(r" {\\bf\\it \2} ", text_buffer)
     text_buffer = bf.sub(r" {\\bf \2} ", text_buffer)
@@ -551,4 +582,3 @@ def apply_emphasis(tex, text_buffer, erase=True):
         return ''
     else:
         return text_buffer
-

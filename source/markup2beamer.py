@@ -4,29 +4,30 @@
 # Written by Benjamin Audren
 # 08/10/2013
 
-import parser_md2b
+import parser_m2b
 import file_process as fp
 import language
 
 import os
 
 
-def md2beamer():
+def markup2beamer():
     """
     Main call of the function
 
     """
     # Parsing line argument
-    command_line = parser_md2b.parse()
+    command_line = parser_m2b.parse()
 
     # Recovering the format of the input file
-    extension = command_line.input.split(os.path.sep)[-1].split('.')[-1]
+    command_line.extension = command_line.input.split(
+        os.path.sep)[-1].split('.')[-1]
 
     # Read all possibles extension in language file
     supported_extensions = language.language_definition.keys()
 
-    if extension not in supported_extensions:
-        print 'Your input file has a', extension,
+    if command_line.extension not in supported_extensions:
+        print 'Your input file has a', command_line.extension,
         print 'format, currently unsupported'
         print 'Develop your own format, or use one of the following'
         for ext in supported_extensions:
@@ -35,7 +36,7 @@ def md2beamer():
         return
 
     # Text treatment from md to latex
-    tex_file, success = fp.md_to_tex(command_line)
+    tex_file, success = fp.markup_to_tex(command_line)
 
     if not success:
         print('Tried to texify your markup and failed...')
@@ -54,4 +55,4 @@ def md2beamer():
 
 
 if (__name__ == '__main__'):
-    md2beamer()
+    markup2beamer()
