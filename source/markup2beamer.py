@@ -1,9 +1,12 @@
-# markdown to beamer converter
-# for quick and powerful presentation making, with a lot of customisation
-# possible
-# Written by Benjamin Audren
-# 08/10/2013
+"""
+.. module:: markup2beamer
+    :synopsis: markup language to beamer converter
 
+    for quick and powerful presentation making, with a lot of customisation
+    possible
+
+.. moduleauthor:: Benjamin Audren <benj_audren@yahoo.fr>
+"""
 import parser_m2b
 import file_process as fp
 import language
@@ -35,8 +38,11 @@ def markup2beamer():
         print '\nExiting now'
         return
 
+    # Initialise the File Processor
+    file_processor = fp.FileProcess(command_line)
+
     # Text treatment from md to latex
-    tex_file, success = fp.markup_to_tex(command_line)
+    success = file_processor.markup_to_tex()
 
     if not success:
         print('Tried to texify your markup and failed...')
@@ -45,7 +51,7 @@ def markup2beamer():
 
     # Apply pdflatex enough times and check for issues (open a window with the
     # tex file if needed)
-    success = fp.tex_to_pdf(tex_file, command_line.pdf)
+    success = file_processor.tex_to_pdf(command_line.pdf)
 
     if not success:
         print('Tried to pdfify your tex and failed...')
