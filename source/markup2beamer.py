@@ -1,11 +1,11 @@
 """
 .. module:: markup2beamer
     :synopsis: markup language to beamer converter
-
-    for quick and powerful presentation making, with a lot of customisation
-    possible
-
 .. moduleauthor:: Benjamin Audren <benj_audren@yahoo.fr>
+
+for quick and powerful presentation making, with a lot of customisation
+possible
+
 """
 import parser_m2b
 import file_process as fp
