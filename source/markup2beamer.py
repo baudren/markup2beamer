@@ -51,7 +51,13 @@ def markup2beamer():
 
     # Apply pdflatex enough times and check for issues (open a window with the
     # tex file if needed)
-    success = file_processor.tex_to_pdf(command_line.pdf)
+    if command_line.interactive:
+        try:
+            file_processor.interactive_pdf(command_line.pdf)
+        except KeyboardInterrupt:
+            return
+    else:
+        success = file_processor.tex_to_pdf(command_line.pdf)
 
     if not success:
         print('Tried to pdfify your tex and failed...')

@@ -19,6 +19,10 @@ def create_parser():
         '-o', metavar='output pdf', type=str, dest='pdf', default=None)
 
     parser.add_argument(
+        '-i', metavar='interactive mode', dest='interactive',
+        action='store_const', const=True, default=False)
+
+    parser.add_argument(
         '-v', metavar='verbosity', dest='verbose',
         action='store_const', const=True, default=False)
 

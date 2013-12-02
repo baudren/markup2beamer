@@ -10,7 +10,8 @@ from copy import deepcopy
 import re
 import os
 import subprocess as sp
-
+import hashlib
+from time import sleep
 
 class FileProcess(object):
     """
@@ -93,7 +94,10 @@ class FileProcess(object):
 
         # Transcribe the header into a tex file
         for name in ['headers', 'body']:
-            self.texify(name)
+            try:
+                self.texify(name)
+            except UnboundLocalError:
+                return False
 
         with open(self.tex_file, 'w') as tex_writer:
             for line in self.tex:
@@ -170,6 +174,8 @@ class FileProcess(object):
         if context == 'headers':
             # must extract syntax and transform into latex commands
             for line in text:
+                if self.verbose:
+                    print 'header line', line
                 if len(line) != 0:
                     self.extract_header_command(line)
 
@@ -196,6 +202,8 @@ class FileProcess(object):
 
                 # catch special frames, that are only one liners
                 if special_frame is not None:
+                    if self.verbose:
+                        print 'catching special command', line
                     # first, exit current slide if any
                     if in_slide:
                         self.texify_slide(text[first_index:index])
@@ -206,6 +214,8 @@ class FileProcess(object):
 
                 # catch (sub)sections
                 elif section is not None:
+                    if self.verbose:
+                        print 'catching beginning of section'
                     if section.group(2).find(
                             lang[self.ext]['section'][0]) == -1:
                         level = '%ssection' % ''.join(
@@ -281,7 +291,7 @@ class FileProcess(object):
         # loop on the slide, have a nested way of deciphering environments.
         index = 3
         while True:
-            success, index = self.extract_environments(index)
+            success, index = self.extract_environments(index, source)
             if not success:
                 break
 
@@ -343,7 +353,7 @@ class FileProcess(object):
             else:
                 pass
 
-    def tex_to_pdf(self, pdf_file):
+    def tex_to_pdf(self, pdf_file, texify_only=False):
         """
         Run once a pdflatex compilation, and open the pdf file
 
@@ -354,18 +364,57 @@ class FileProcess(object):
 
         # Simply run twice pdflatex
         local_tex = self.tex_file.split(os.path.sep)[-1]
-        os.chdir(os.path.sep.join(self.tex_file.split(os.path.sep)[:-1]))
+        if not texify_only:
+            os.chdir(os.path.sep.join(self.tex_file.split(os.path.sep)[:-1]))
 
-        if not pdf_file:
-            pdf_file = local_tex.replace('.tex', '.pdf')
-        else:
-            pdf_file = pdf_file.split(os.path.sep)[-1]
+            if not pdf_file:
+                pdf_file = local_tex.replace('.tex', '.pdf')
+            else:
+                pdf_file = pdf_file.split(os.path.sep)[-1]
 
         sp.call(["pdflatex", local_tex])
         sp.call(["pdflatex", local_tex])
-        sp.call(["open", pdf_file])
+        if not texify_only:
+            sp.call(["open", "-a", "/Applications/Skim.app", pdf_file])
 
         return True
+
+    def interactive_pdf(self, pdf_file):
+        """
+        Run interactively the pdflatex compilation
+
+        It loops indefinitely, and as soon as it changes on disc, recompile the
+        texfile.
+        """
+        local_pdf = pdf_file.split(os.path.sep)[-1]
+        local_markup = self.markup_file.split(os.path.sep)[-1]
+        root_dir = os.path.abspath(os.curdir)
+        tex_dir = os.path.abspath(
+            os.path.sep.join(self.tex_file.split(os.path.sep)[:-1]))
+
+        # going to the latex dir
+        os.chdir(tex_dir)
+
+        self.tex_to_pdf(pdf_file, texify_only=True)
+        sp.call(["open", "-a", "/Applications/Skim.app", local_pdf])
+        # Store the hash md5 of the tex file
+        md5sum = md5_for_file(local_markup, hr=True)
+        while True:
+            sleep(1)
+            os.chdir(tex_dir)
+            newmd5 = md5_for_file(local_markup, hr=True)
+            if newmd5 != md5sum:
+                os.chdir(root_dir)
+                # Clean the variables
+                self.source = []
+                self.transformator = od()
+                self.tex = []
+                # Reprocess the markup
+                success = self.markup_to_tex()
+                if success:
+                    os.chdir(tex_dir)
+                    self.tex_to_pdf(pdf_file, texify_only=True)
+                    md5sum = newmd5
 
     def special_action(self, action):
         """
@@ -390,7 +439,7 @@ class FileProcess(object):
             print 'warning, %s not understood', action
         self.tex.append('\end{frame}\n')
 
-    def extract_environments(self, start_index):
+    def extract_environments(self, start_index, source):
         """
         Extract the latex environment from start_index
 
@@ -413,7 +462,7 @@ class FileProcess(object):
 
         text_buffer = ''
 
-        for index, line in enumerate(self.source[start_index:]):
+        for index, line in enumerate(source[start_index:]):
             # if a nested environment was found, pass until index is
             # index_nested
             if found_sub_environment:
@@ -467,7 +516,7 @@ class FileProcess(object):
                     if self.verbose:
                         print 'found nested env'
                     success, index_nested = self.extract_environments(
-                        index_nested)
+                        index_nested, source)
                     #found_sub_environment = True
                     found_sub_environment = success
                     continue
@@ -530,7 +579,6 @@ class FileProcess(object):
                 print '/!\ exiting environment'
             text_buffer = self.apply_emphasis(text_buffer)
             self.tex.append(headers[1])
-            print headers[1]
         text_buffer = self.apply_emphasis(text_buffer)
         return False, start_index+index
 
@@ -640,3 +688,20 @@ class FileProcess(object):
             return ''
         else:
             return text_buffer
+
+
+def md5_for_file(path, block_size=256*128, hr=False):
+    '''
+    Block size directly depends on the block size of your filesystem
+    to avoid performances issues
+    Here I have blocks of 4096 octets (Default NTFS)
+
+    Taken from http://stackoverflow.com/a/17782753
+    '''
+    md5 = hashlib.md5()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(block_size), b''):
+            md5.update(chunk)
+    if hr:
+        return md5.hexdigest()
+    return md5.digest()
