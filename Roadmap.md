@@ -16,7 +16,7 @@ o have a short environment type (for commands like vspace, column)
   etc). So far, no user defined !
 o being able to use a * in a math environment without interpretating
   it ! (should work)
-- specify in headers which environments should start a fragile
+o specify in headers which environments should start a fragile
   environment
 o being able to specify 'fragile' for a given slide.
 o detect language from extension
