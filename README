@@ -1,13 +1,9 @@
-=========
-md2beamer
-=========
-
+# md2beamer
 
 A pain-free experience of writing beautiful, fast and readable slides.
 
 
-Design Requirements
--------------------
+## Design Requirements
 
 - the text file must be **readable**, which implies
   * support for indentation
