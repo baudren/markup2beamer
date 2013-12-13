@@ -20,7 +20,7 @@ o specify in headers which environments should start a fragile
   environment
 o being able to specify 'fragile' for a given slide.
 o detect language from extension
-~ automatic installer (decide between setup.py and a normal python
+o automatic installer (decide between setup.py and a normal python
   file)
 o can be run as a script (if the file changed on disk, reapply the
   convert, texify, and output)

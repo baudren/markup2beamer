@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 .. module:: markup2beamer
     :synopsis: markup language to beamer converter
