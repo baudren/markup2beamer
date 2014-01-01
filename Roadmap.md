@@ -26,3 +26,4 @@ o can be run as a script (if the file changed on disk, reapply the
   convert, texify, and output)
 - allow for clear new languages definitions (proper use of flags,
   etc)
+- allow the interactive mode to work for non-mac users.
