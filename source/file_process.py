@@ -582,10 +582,28 @@ class FileProcess(object):
         text_buffer = self.apply_emphasis(text_buffer)
         return False, start_index+index
 
-    # Define all options, like width, this kind of things, and return an array
-    # of two lines, start and finish
     def get_surrounding_environment(self, name, options, title):
-        # take care of blocks
+        """
+        Given the environment name, return the corresponding tex flags
+
+        Parameters
+        ----------
+        - name: `str`
+            tex name of the environment, like *block*, *verbatim*, *columns*,
+            etc...
+        - options: `str`
+            raw string of options, to be further processed by
+            :func:`parse_options`
+        - title: `str`
+            for certain environments, like *block*, corresponds to the title.
+
+        Returns
+        -------
+        - surroundings: `list`
+            list of two strings that respectively open and close the tex
+            environment.
+
+        """
         start_line = ''
         out, flags = self.parse_options(options)
 
@@ -593,6 +611,7 @@ class FileProcess(object):
             start_line += '\\begin{columns}\n\
                 \column{%g\\textwidth}\n' % out['number']
 
+        # take care of blocks
         if name.find('block') != -1:
             start_line += '\\begin{%s}{%s}%s\n' % (
                 name.strip(), title, out['slide_show'])
@@ -631,7 +650,25 @@ class FileProcess(object):
         return [start_line, stop_line]
 
     def parse_options(self, options):
+        """
+        Extract meaning from the option string of an environment
 
+        ..warning::
+
+            The syntax in this method is actually hard-coded, how to separate
+            the different kind of options, how are the percent width supposed
+            to look like, etc...
+
+        Parameters
+        ----------
+        - options: `str`
+            Raw string to be interpreted
+
+        Returns
+        -------
+        - tuple of dictionaries. 
+
+        """
         out = {'option_string': '', 'slide_show': '', 'number': 0, 'align': ''}
 
         flags = {'extra_column_env': False, 'has_align': False}
@@ -652,6 +689,15 @@ class FileProcess(object):
         return out, flags
 
     def read_command(self, argument):
+        """
+        Extract the environment name and the option string from raw input.
+
+        .. warning::
+
+            The syntax here is hard-coded, namely the symbols used to separate
+            options from name (`;`, `|`, `,`)
+
+        """
 
         options = []
         title = ''
@@ -673,15 +719,15 @@ class FileProcess(object):
         """
 
         #emphasis = re.compile('([^*]*)([*]+)(.*)')
-        bf_it = re.compile("( \*{3})([^ \*].*?[^ \*])(\*{3})", re.DOTALL)
-        bf = re.compile("( \*{2})([^ \*].*?[^ \*])(\*{2})", re.DOTALL)
-        it = re.compile("( \*{1})([^ \*].*?[^ \*])(\*{1})", re.DOTALL)
+        boldface_italic = re.compile("( \*{3})([^ \*].*?[^ \*])(\*{3})", re.DOTALL)
+        boldface = re.compile("( \*{2})([^ \*].*?[^ \*])(\*{2})", re.DOTALL)
+        italic = re.compile("( \*{1})([^ \*].*?[^ \*])(\*{1})", re.DOTALL)
         # The option DOTALL ensures that the newlines are considered as part of
         # .
 
-        text_buffer = bf_it.sub(r" {\\bf\\it \2} ", text_buffer)
-        text_buffer = bf.sub(r" {\\bf \2} ", text_buffer)
-        text_buffer = it.sub(r" {\\it \2} ", text_buffer)
+        text_buffer = boldface_italic.sub(r" {\\bf\\it \2} ", text_buffer)
+        text_buffer = boldface.sub(r" {\\bf \2} ", text_buffer)
+        text_buffer = italic.sub(r" {\\it \2} ", text_buffer)
 
         if erase:
             self.tex.append(text_buffer)

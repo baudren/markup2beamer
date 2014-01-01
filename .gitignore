@@ -12,3 +12,4 @@
 *.fdb_latexmk
 *.vrb
 *.synctex.gz
+build/
