@@ -570,6 +570,10 @@ class FileProcess(object):
                     if (in_environment and name in self.fragile_keywords):
                         self.tex.append(line[index_to_strip:]+'\n')
                         continue
+                    if in_environment:
+                        if name == 'image':
+                            self.tex.append(line.strip())
+                            continue
                     text_buffer += line+'\n'
         # getting out
 
@@ -623,7 +627,7 @@ class FileProcess(object):
                 start_line += '\\begin{%s}' % out['align']
             start_line += '\includegraphics[%s]{' % (out['option_string'])
             if flags['has_align']:
-                stop_line = '}\caption{%s}\n\end{%s}\n' % (title, out['align'])
+                stop_line = '}\caption{%s}\n\end{%s}\n\end{figure}\n' % (title, out['align'])
             else:
                 stop_line = '}\caption{%s}\n\end{figure}\n' % title
         elif name.find('verbatim') != -1:
@@ -682,7 +686,7 @@ class FileProcess(object):
                 out['slide_show'] = option.strip()
             elif option.strip().lower() in ['center', 'left', 'right']:
                 flags['has_align'] = True
-                out['align'] = option
+                out['align'] = option.strip().lower()
             else:
                 out['option_string'] += option+','
 
