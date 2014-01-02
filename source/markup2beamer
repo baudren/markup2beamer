@@ -58,7 +58,7 @@ def markup2beamer():
         except KeyboardInterrupt:
             return
     else:
-        success = file_processor.tex_to_pdf(command_line.pdf)
+        success = file_processor.tex_to_pdf(command_line.pdf, open_viewer=False)
 
     if not success:
         print('Tried to pdfify your tex and failed...')

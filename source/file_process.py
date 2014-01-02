@@ -353,7 +353,7 @@ class FileProcess(object):
             else:
                 pass
 
-    def tex_to_pdf(self, pdf_file, texify_only=False):
+    def tex_to_pdf(self, pdf_file, texify_only=False, open_viewer=True):
         """
         Run once a pdflatex compilation, and open the pdf file
 
@@ -374,7 +374,7 @@ class FileProcess(object):
 
         sp.call(["pdflatex", local_tex])
         sp.call(["pdflatex", local_tex])
-        if not texify_only:
+        if open_viewer:
             sp.call(["open", "-a", "/Applications/Skim.app", pdf_file])
 
         return True
