@@ -45,6 +45,12 @@ in the file `source/language.py`. To use the script, simply call
     $ python source/markup2beamer example/simple.md
 
 
+Current Limitations (see Roadmap)
+---------------------------------
+
+The interactive mode is not very general, and only runs on Mac, for
+Skim viewer. 
+
 Inspiration
 ------------
 

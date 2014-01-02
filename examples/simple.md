@@ -59,7 +59,7 @@ A lonely slide in a lonely world
     +- enumerate in it !
     ~~~
 
-    ~~~ alertblock | This one is red; 60%
+    ~~~ alertblock | This one is red; 50%
     just to show all the possible blocks !
     ~~~
 
