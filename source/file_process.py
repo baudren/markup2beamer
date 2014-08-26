@@ -253,6 +253,8 @@ class FileProcess(object):
         Translate a source markup slide into tex
 
         """
+        print 'Frame found to be'
+        print '\n'.join(source)
         # recover possible slide options
         if len(source[0].split('|')) > 1:
             title, options = [elem.strip() for elem in source[0].split('|')]
@@ -365,17 +367,20 @@ class FileProcess(object):
         # Simply run twice pdflatex
         local_tex = self.tex_file.split(os.path.sep)[-1]
         if not texify_only:
-            os.chdir(os.path.sep.join(self.tex_file.split(os.path.sep)[:-1]))
+            if os.path.dirname(local_tex):
+                os.chdir(os.path.dirname(local_tex))
+            print 'here'
 
             if not pdf_file:
                 pdf_file = local_tex.replace('.tex', '.pdf')
             else:
-                pdf_file = pdf_file.split(os.path.sep)[-1]
+                pdf_file = os.path.basename(pdf_file)
 
         sp.call(["pdflatex", local_tex])
         sp.call(["pdflatex", local_tex])
         if open_viewer:
-            sp.call(["open", "-a", "/Applications/Skim.app", pdf_file])
+            #sp.call(["open", "-a", "/Applications/Skim.app", pdf_file])
+            sp.call(["gnome-open", pdf_file])
 
         return True
 
@@ -396,7 +401,8 @@ class FileProcess(object):
         os.chdir(tex_dir)
 
         self.tex_to_pdf(pdf_file, texify_only=True)
-        sp.call(["open", "-a", "/Applications/Skim.app", local_pdf])
+        #sp.call(["open", "-a", "/Applications/Skim.app", local_pdf])
+        sp.call(["gnome-open", local_pdf])
         # Store the hash md5 of the tex file
         md5sum = md5_for_file(local_markup, hr=True)
         while True:
@@ -465,8 +471,10 @@ class FileProcess(object):
         for index, line in enumerate(source[start_index:]):
             # if a nested environment was found, pass until index is
             # index_nested
+            print index, line
+            print found_sub_environment
             if found_sub_environment:
-                if index < index_nested-1:
+                if index <= index_nested:
                     continue
                 else:
                     found_sub_environment = False
@@ -517,6 +525,9 @@ class FileProcess(object):
                         print 'found nested env'
                     success, index_nested = self.extract_environments(
                         index_nested, source)
+                    index_nested -= start_index
+                    print index_nested, index
+                    print 'Did it work?', success
                     #found_sub_environment = True
                     found_sub_environment = success
                     continue
@@ -611,7 +622,7 @@ class FileProcess(object):
         start_line = ''
         out, flags = self.parse_options(options)
 
-        if flags['extra_column_env']:
+        if flags['extra_column_env'] and name != 'column':
             start_line += '\\begin{columns}\n\
                 \column{%g\\textwidth}\n' % out['number']
 
@@ -670,7 +681,7 @@ class FileProcess(object):
 
         Returns
         -------
-        - tuple of dictionaries. 
+        - tuple of dictionaries.
 
         """
         out = {'option_string': '', 'slide_show': '', 'number': 0, 'align': ''}
@@ -748,6 +759,7 @@ def md5_for_file(path, block_size=256*128, hr=False):
 
     Taken from http://stackoverflow.com/a/17782753
     '''
+    return 1
     md5 = hashlib.md5()
     with open(path, 'rb') as f:
         for chunk in iter(lambda: f.read(block_size), b''):
