@@ -266,6 +266,17 @@ class FileProcess(object):
             subtitle = source[2]
         else:
             subtitle = ''
+        if options.find('<') != -1:
+            groups = options.split(',')
+            slide_display = ''
+            for option in groups:
+                if option.find('<') != -1:
+                    slide_display = option
+            if slide_display:
+                groups.pop(groups.index(slide_display))
+            options = ', '.join(groups)
+        else:
+            slide_display = ''
         # check for a \verb environnement, and if present, add fragile
         fragile = False
         for line in source:
@@ -285,10 +296,11 @@ class FileProcess(object):
                 options = ','.join(options_array)
 
         if options != '':
-            self.tex.append('\n\\begin{frame}[%s]{%s}{%s}\n' % (
-                options, title, subtitle))
+            self.tex.append('\n\\begin{frame}%s[%s]{%s}{%s}\n' % (
+                slide_display, options, title, subtitle))
         else:
-            self.tex.append('\n\\begin{frame}{%s}{%s}\n' % (title, subtitle))
+            self.tex.append('\n\\begin{frame}%s{%s}{%s}\n' % (
+                slide_display, title, subtitle))
 
         # loop on the slide, have a nested way of deciphering environments.
         index = 3
@@ -430,20 +442,23 @@ class FileProcess(object):
         needed to call such a slide, look at the language file.
 
         """
-        self.tex.append('\\begin{frame}\n')
-        if action == 'title':
-            self.tex.append('\\titlepage\n')
-        elif action.find('outline') != -1:
-            # check if option is specified with pipe
-            self.tex.append('\\frametitle{Outline}\n')
-            if len(action.split('|')) == 1:
-                self.tex.append('\\tableofcontents\n')
-            else:
-                action, complement = action.split('|')
-                self.tex.append('\\tableofcontents[%s]\n' % complement)
+        if action.find('againframe') != -1:
+            self.tex.append('\\%s\n' % action.strip())
         else:
-            print 'warning, %s not understood', action
-        self.tex.append('\end{frame}\n')
+            self.tex.append('\\begin{frame}\n')
+            if action == 'title':
+                self.tex.append('\\titlepage\n')
+            elif action.find('outline') != -1:
+                # check if option is specified with pipe
+                self.tex.append('\\frametitle{Outline}\n')
+                if action.find('|') == -1:
+                    self.tex.append('\\tableofcontents\n')
+                else:
+                    action, complement = action.split('|')
+                    self.tex.append('\\tableofcontents[%s]\n' % complement)
+            else:
+                print 'warning, %s not understood'  % action
+            self.tex.append('\end{frame}\n')
 
     def extract_environments(self, start_index, source):
         """
@@ -457,7 +472,7 @@ class FileProcess(object):
             '\s*%s\s+(.*)\s+%s\s*' % (
                 lang[self.ext]['environments'][0],
                 lang[self.ext]['environments'][1]))
-        list_env = re.compile('\s*([*+])([-]*)\s+(.*)')
+        list_env = re.compile('\s*([*+])([-]{0,1}|<.*>)\s+(.*)')
         # This will match strings like:
         # I *have a complete italic statement*
         # I **only have the start of a bold
@@ -545,11 +560,17 @@ class FileProcess(object):
                         # take the only other possibility.
                         list_type = 'itemize'
                     # Recover the potential option to have a reveal
+                    indicator = ''
                     if begin_list.group(2) == '':
                         self.tex.append('\\begin{%s}\n' % list_type)
-                    else:
+                    elif begin_list.group(2) == '-':
                         self.tex.append('\\begin{%s}[<+->]\n' % list_type)
-                text_buffer += '\item %s\n' % begin_list.group(3)
+                    else:
+                        self.tex.append('\\begin{%s}\n' % list_type)
+                if begin_list.group(2) and begin_list.group(2) != '-':
+                    indicator = begin_list.group(2)
+                text_buffer += '\item%s %s\n' % (
+                    indicator, begin_list.group(3))
             else:
                 # if one finds the ending pattern, return success
                 if line.find(lang[self.ext]['environments'][1]) != -1:
@@ -620,25 +641,30 @@ class FileProcess(object):
 
         """
         start_line = ''
-        out, flags = self.parse_options(options)
+        out = self.parse_options(options)
 
-        if flags['extra_column_env'] and name != 'column':
+        if 'number' in out.keys() and name != 'column':
             start_line += '\\begin{columns}\n\
                 \column{%g\\textwidth}\n' % out['number']
 
         # take care of blocks
         if name.find('block') != -1:
+            if 'uncover' in out.keys():
+                start_line += '\uncover<%s>{\n' % (out['uncover'])
             start_line += '\\begin{%s}{%s}%s\n' % (
                 name.strip(), title, out['slide_show'])
             stop_line = '\end{%s}\n' % name.strip()
+            if 'uncover' in out.keys():
+                stop_line += '}\n'
 
         elif name.find('image') != -1:
             start_line += '\\begin{figure}\n'
-            if flags['has_align']:
+            if 'align' in out.keys():
                 start_line += '\\begin{%s}' % out['align']
             start_line += '\includegraphics[%s]{' % (out['option_string'])
-            if flags['has_align']:
-                stop_line = '}\caption{%s}\n\end{%s}\n\end{figure}\n' % (title, out['align'])
+            if 'align' in out.keys():
+                stop_line = '}\caption{%s}\n\end{%s}\n\end{figure}\n' % (
+                    title, out['align'])
             else:
                 stop_line = '}\caption{%s}\n\end{figure}\n' % title
         elif name.find('verbatim') != -1:
@@ -646,7 +672,7 @@ class FileProcess(object):
             stop_line = '\end{%s}\n' % name
         else:
             if name.find('columns') != -1:
-                if out['number'] == 0:
+                if 'number' not in out.keys():
                     if self.verbose:
                         print 'no width specified, expecting column arguments'
                     start_line += '\\begin{columns}\n'
@@ -659,7 +685,7 @@ class FileProcess(object):
                     name.strip(), out['option_string'], out['slide_show'])
                 stop_line = '\end{%s}\n' % name.strip()
         # Finishing the extra columns
-        if flags['extra_column_env']:
+        if 'number' in out.keys():
             stop_line += '\end{columns}\n'
 
         return [start_line, stop_line]
@@ -684,24 +710,23 @@ class FileProcess(object):
         - tuple of dictionaries.
 
         """
-        out = {'option_string': '', 'slide_show': '', 'number': 0, 'align': ''}
-
-        flags = {'extra_column_env': False, 'has_align': False}
+        out = {'slide_show': '',
+               'option_string': ''}
 
         for option in options:
             if option.find('%') != -1:
-                flags['extra_column_env'] = True
                 out['number'] = float(option.split('%')[0])/100
             # take care of slide appearance
             elif option.find('<') != -1:
                 out['slide_show'] = option.strip()
             elif option.strip().lower() in ['center', 'left', 'right']:
-                flags['has_align'] = True
                 out['align'] = option.strip().lower()
+            elif option.find('uncover') != -1:
+                out['uncover'] = option.split()[-1].strip()
             else:
                 out['option_string'] += option+','
 
-        return out, flags
+        return out
 
     def read_command(self, argument):
         """
@@ -759,7 +784,6 @@ def md5_for_file(path, block_size=256*128, hr=False):
 
     Taken from http://stackoverflow.com/a/17782753
     '''
-    return 1
     md5 = hashlib.md5()
     with open(path, 'rb') as f:
         for chunk in iter(lambda: f.read(block_size), b''):
