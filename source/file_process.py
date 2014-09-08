@@ -785,9 +785,12 @@ def md5_for_file(path, block_size=256*128, hr=False):
     Taken from http://stackoverflow.com/a/17782753
     '''
     md5 = hashlib.md5()
-    with open(path, 'rb') as f:
-        for chunk in iter(lambda: f.read(block_size), b''):
-            md5.update(chunk)
-    if hr:
-        return md5.hexdigest()
-    return md5.digest()
+    try:
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(block_size), b''):
+                md5.update(chunk)
+        if hr:
+            return md5.hexdigest()
+        return md5.digest()
+    except IOError:
+        return -1
